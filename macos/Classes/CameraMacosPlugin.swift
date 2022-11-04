@@ -2,7 +2,9 @@ import Cocoa
 import FlutterMacOS
 import AVFoundation
 
-public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
+public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCapturePhotoCaptureDelegate, AVCaptureFileOutputRecordingDelegate {
+    
+    
     
     let registry: FlutterTextureRegistry
     
@@ -20,9 +22,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     // Output channel for calling Flutter-code methods
     var outputChannel: FlutterMethodChannel!
-    
-    // Video preview layer
-    var videoPreviewLayer: AVCaptureVideoPreviewLayer!
     
     // Semaphore variable
     var isTakingPicture: Bool = false
@@ -58,6 +57,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             initCamera(arguments, result)
         case "takePicture":
             takePicture(result)
+        case "startRecording":
+            startRecording(result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -128,11 +129,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 }
             } else {
                 // Add video output.
-                let videoOutput = AVCaptureVideoDataOutput()
-                videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-                videoOutput.alwaysDiscardsLateVideoFrames = true
+                let videoOutput = AVCaptureMovieFileOutput()
                 
-                videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main)
                 if captureSession.canAddOutput(videoOutput) {
                     outputInitialized = true
                     captureSession.addOutput(videoOutput)
@@ -225,12 +223,17 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     func startRecording(_ result: @escaping FlutterResult) {
-        guard let output = captureSession.outputs.first as? AVCaptureVideoDataOutput else {
+        guard let output = captureSession.outputs.first as? AVCaptureMovieFileOutput else {
             result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "captureSession Output not found", details: nil))
             return
         }
         if(!isRecording) {
             isRecording = true
+            let paths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
+            let fileUrl = paths[0].appendingPathComponent("output.mp4")
+            try? FileManager.default.removeItem(at: fileUrl)
+            output.startRecording(to: fileUrl, recordingDelegate: self)
+            result(true)
             isRecording = false
         } else {
             result(FlutterError(code: "CONCURRENCY_ERROR", message: "Already recording video", details: nil))
@@ -238,8 +241,21 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     
-    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        
+    public func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
+        guard let outputChannel = outputChannel else {
+            fatalError("Missing output channel")
+        }
+        if let error = error {
+            outputChannel.invokeMethod("onVideoTaken", arguments: ["error": FlutterError(code: "VIDEO_OUTPUT_ERROR", message: error.localizedDescription, details: nil)])
+        } else {
+            guard let videoNSData = NSData(contentsOf: outputFileURL), !videoNSData.isEmpty
+                else {
+                outputChannel.invokeMethod("onVideoTaken", arguments: ["error": FlutterError(code: "VIDEO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil)])
+                return
+            }
+            let videoData = Data(videoNSData)
+            outputChannel.invokeMethod("onVideoTaken", arguments: ["videoData": videoData, "error": nil])
+        }
     }
     
 }
