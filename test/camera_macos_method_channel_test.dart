@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
 
 void main() {
-  MethodChannelCameraMacos platform = MethodChannelCameraMacos();
+  MethodChannelCameraMacOS platform = MethodChannelCameraMacOS();
   const MethodChannel channel = MethodChannel('camera_macos');
 
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -16,9 +16,5 @@ void main() {
 
   tearDown(() {
     channel.setMockMethodCallHandler(null);
-  });
-
-  test('getPlatformVersion', () async {
-    expect(await platform.getPlatformVersion(), '42');
   });
 }

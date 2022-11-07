@@ -10,12 +10,12 @@ import AVFoundation
 
 extension AVCaptureDevice {
     
-    public class func captureDevice(with position: AVCaptureDevice.Position) -> AVCaptureDevice? {
+    public class func captureDevice() -> AVCaptureDevice? {
         if #available(macOS 10.15, *) {
             let devices = AVCaptureDevice.DiscoverySession(deviceTypes: [ .builtInWideAngleCamera, .builtInMicrophone ], mediaType: AVMediaType.video, position: .unspecified).devices
-            return devices.first(where: { $0.position == position })
+            return devices.first
         } else {
-            return AVCaptureDevice.devices(for: .video).filter({$0.position == position}).first
+            return AVCaptureDevice.devices(for: .video).first
         }
         
     }

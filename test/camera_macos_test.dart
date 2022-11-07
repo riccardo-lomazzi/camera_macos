@@ -1,29 +1,44 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'dart:typed_data';
+
+import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos.dart';
-import 'package:camera_macos/camera_macos_platform_interface.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
+import 'package:camera_macos/camera_macos_platform_interface.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-class MockCameraMacosPlatform
+class MockCameraMacOSPlatform
     with MockPlatformInterfaceMixin
-    implements CameraMacosPlatform {
+    implements CameraMacOSPlatform {
+  @override
+  Future<CameraMacOSArguments?> initialize(
+      {required CameraMacOSMode cameraMacOSMode}) {
+    throw UnimplementedError();
+  }
 
   @override
-  Future<String?> getPlatformVersion() => Future.value('42');
+  Future<bool> startVideoRecording({double? maxVideoDuration}) {
+    // TODO: implement recordVideo
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String?> stopVideoRecording() {
+    // TODO: implement stopRecording
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Uint8List?> takePicture() {
+    // TODO: implement takePicture
+    throw UnimplementedError();
+  }
 }
 
 void main() {
-  final CameraMacosPlatform initialPlatform = CameraMacosPlatform.instance;
+  final CameraMacOSPlatform initialPlatform = CameraMacOSPlatform.instance;
 
-  test('$MethodChannelCameraMacos is the default instance', () {
-    expect(initialPlatform, isInstanceOf<MethodChannelCameraMacos>());
-  });
-
-  test('getPlatformVersion', () async {
-    CameraMacos cameraMacosPlugin = CameraMacos();
-    MockCameraMacosPlatform fakePlatform = MockCameraMacosPlatform();
-    CameraMacosPlatform.instance = fakePlatform;
-
-    expect(await cameraMacosPlugin.getPlatformVersion(), '42');
+  test('$MethodChannelCameraMacOS is the default instance', () {
+    expect(initialPlatform, isInstanceOf<MethodChannelCameraMacOS>());
   });
 }

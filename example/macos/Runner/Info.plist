@@ -28,6 +28,8 @@
 	<string>MainMenu</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Example camera app</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record video</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

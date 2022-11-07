@@ -4,8 +4,6 @@ import AVFoundation
 
 public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCapturePhotoCaptureDelegate, AVCaptureFileOutputRecordingDelegate {
     
-    
-    
     let registry: FlutterTextureRegistry
     
     // Texture id of the camera preview
@@ -26,6 +24,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     // Semaphore variable
     var isTakingPicture: Bool = false
     var isRecording: Bool = false
+    var methodResult: FlutterResult?
     
     init(_ registry: FlutterTextureRegistry, _ outputChannel: FlutterMethodChannel) {
         self.registry = registry
@@ -58,7 +57,10 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         case "takePicture":
             takePicture(result)
         case "startRecording":
-            startRecording(result)
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            startRecording(arguments, result)
+        case "stopRecording":
+            stopRecording(result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -79,7 +81,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 captureSession.sessionPreset = .photo
             }
         }
-        guard let newCameraObject: AVCaptureDevice = AVCaptureDevice.captureDevice(with: .front) else {
+        guard let newCameraObject: AVCaptureDevice = AVCaptureDevice.captureDevice() else {
             result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not find a suitable camera on this device", details: nil))
             return
         }
@@ -98,8 +100,10 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 device.focusMode = .autoFocus
             }
             if device.isExposureModeSupported(.continuousAutoExposure) {
-                device.exposurePointOfInterest = focusPoint
                 device.exposureMode = AVCaptureDevice.ExposureMode.continuousAutoExposure
+            }
+            if device.isExposurePointOfInterestSupported {
+                device.exposurePointOfInterest = focusPoint
             }
             device.unlockForConfiguration()
             
@@ -174,30 +178,24 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "captureSession Output not found", details: nil))
             return
         }
-        guard let outputChannel = outputChannel else {
-            result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Missing output channel", details: nil))
-            return
-        }
         if(!isTakingPicture) {
             isTakingPicture = true
             if #available(macOS 10.15, *) {
+                methodResult = result
                 let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
                 (output as! AVCapturePhotoOutput).capturePhoto(with: settings, delegate: self)
-                result(true)
             } else {
                 guard let connection = output.connections.first else {
-                    result(false)
-                    outputChannel.invokeMethod("onPictureTaken", arguments: ["error": FlutterError(code: "AVConnection object error", message: "Already taking picture", details: nil)])
+                    result(["error": FlutterError(code: "AVConnection object error", message: "Already taking picture", details: nil)])
                     return
                 }
                 (output as! AVCaptureStillImageOutput).captureStillImageAsynchronously(from: connection) { buffer, error in
                     if let error = error {
-                        outputChannel.invokeMethod("onPictureTaken", arguments: ["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: error.localizedDescription, details: nil) ])
+                        result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: error.localizedDescription, details: nil) ])
                     } else if let buffer = buffer, let imageNSData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(buffer) {
-                        outputChannel.invokeMethod("onPictureTaken", arguments: ["imageData": Data(imageNSData), "error": nil])
+                        result(["imageData": Data(imageNSData), "error": nil])
                     }
                 }
-                result(true)
             }
             isTakingPicture = false
         } else {
@@ -207,22 +205,22 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     @available(macOS 10.15,*)
     public func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard let outputChannel = outputChannel else {
-            fatalError("Missing output channel")
+        guard let methodResult = self.methodResult else {
+            fatalError("Missing Method Result")
         }
         if let error = error {
-            outputChannel.invokeMethod("onPictureTaken", arguments: ["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: error.localizedDescription, details: nil)])
+            methodResult(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: error.localizedDescription, details: nil)])
         } else {
             guard let imageData = photo.fileDataRepresentation(), !imageData.isEmpty
                 else {
-                outputChannel.invokeMethod("onPictureTaken", arguments: ["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil)])
+                methodResult(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil)])
                 return
             }
-            outputChannel.invokeMethod("onPictureTaken", arguments: ["imageData": imageData, "error": nil])
+            methodResult(["imageData": imageData, "error": nil])
         }
     }
     
-    func startRecording(_ result: @escaping FlutterResult) {
+    func startRecording(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
         guard let output = captureSession.outputs.first as? AVCaptureMovieFileOutput else {
             result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "captureSession Output not found", details: nil))
             return
@@ -232,29 +230,45 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             let paths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
             let fileUrl = paths[0].appendingPathComponent("output.mp4")
             try? FileManager.default.removeItem(at: fileUrl)
+            if let maxVideoDuration = arguments["maxVideoDuration"] as? Double {
+                output.maxRecordedDuration = CMTimeMakeWithSeconds(maxVideoDuration, preferredTimescale: 60)
+            }
             output.startRecording(to: fileUrl, recordingDelegate: self)
             result(true)
-            isRecording = false
         } else {
             result(FlutterError(code: "CONCURRENCY_ERROR", message: "Already recording video", details: nil))
         }
     }
     
+    func stopRecording(_ result: @escaping FlutterResult) {
+        guard let output = captureSession.outputs.first as? AVCaptureMovieFileOutput else {
+            result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "AVCaptureSession output not found", details: nil))
+            return
+        }
+        if(!isRecording) {
+            result(FlutterError(code: "CAMERA_NOT_RECORDING_ERROR", message: "Camera not recording", details: nil))
+        } else {
+            self.methodResult = result
+            self.isRecording = false
+            output.stopRecording()
+        }
+    }
+    
     
     public func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        guard let outputChannel = outputChannel else {
-            fatalError("Missing output channel")
+        guard let methodResult = self.methodResult else {
+            fatalError("Missing Method Result")
         }
         if let error = error {
-            outputChannel.invokeMethod("onVideoTaken", arguments: ["error": FlutterError(code: "VIDEO_OUTPUT_ERROR", message: error.localizedDescription, details: nil)])
+            methodResult(["error": FlutterError(code: "VIDEO_OUTPUT_ERROR", message: error.localizedDescription, details: nil)])
         } else {
             guard let videoNSData = NSData(contentsOf: outputFileURL), !videoNSData.isEmpty
                 else {
-                outputChannel.invokeMethod("onVideoTaken", arguments: ["error": FlutterError(code: "VIDEO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil)])
+                methodResult(["error": FlutterError(code: "VIDEO_OUTPUT_ERROR", message: "videoData is empty or invalid", details: nil)])
                 return
             }
             let videoData = Data(videoNSData)
-            outputChannel.invokeMethod("onVideoTaken", arguments: ["videoData": videoData, "error": nil])
+            methodResult(["videoData": videoData, "error": nil])
         }
     }
     
