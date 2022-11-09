@@ -23,6 +23,7 @@ class _MyAppState extends State<MyApp> {
   late double durationValue;
   Uint8List? lastImagePreviewData;
   Uint8List? lastRecordedVideoData;
+  GlobalKey cameraKey = GlobalKey();
 
   @override
   void initState() {
@@ -82,6 +83,7 @@ class _MyAppState extends State<MyApp> {
                       alignment: Alignment.bottomRight,
                       children: [
                         CameraMacOSView(
+                          key: cameraKey,
                           fit: BoxFit.fill,
                           cameraMode: CameraMacOSMode.picture,
                           onCameraInizialized:
@@ -138,11 +140,26 @@ class _MyAppState extends State<MyApp> {
                         MaterialButton(
                           color: Colors.red,
                           textColor: Colors.white,
-                          child: Text("Destroy"),
+                          child: Builder(
+                            builder: (context) {
+                              String buttonText = "Destroy";
+                              if (macOSController != null &&
+                                  macOSController!.isDestroyed) {
+                                buttonText = "Reinitialize";
+                              }
+                              return Text(buttonText);
+                            },
+                          ),
                           onPressed: () async {
                             if (macOSController != null) {
-                              await macOSController?.destroy();
-                              setState(() {});
+                              if (macOSController!.isDestroyed) {
+                                setState(() {
+                                  cameraKey = GlobalKey();
+                                });
+                              } else {
+                                await macOSController?.destroy();
+                                setState(() {});
+                              }
                             }
                           },
                         ),

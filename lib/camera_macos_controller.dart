@@ -1,5 +1,6 @@
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_file.dart';
+import 'package:camera_macos/camera_macos_method_channel.dart';
 import 'package:camera_macos/camera_macos_platform_interface.dart';
 
 class CameraMacOSController {
@@ -28,5 +29,9 @@ class CameraMacOSController {
 
   Future<bool?> destroy() {
     return _platformInstance.destroy();
+  }
+
+  bool get isDestroyed {
+    return (_platformInstance as MethodChannelCameraMacOS).isDestroyed;
   }
 }

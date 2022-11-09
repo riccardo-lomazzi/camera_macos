@@ -31,6 +31,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
       if (args == null) {
         throw FlutterError("Invalid args: invalid platform response");
       }
+      isDestroyed = false;
       return CameraMacOSArguments(
         textureId: args["textureId"],
         size: Size(
@@ -102,7 +103,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     try {
       final bool result = await methodChannel.invokeMethod('destroy') ?? false;
       isDestroyed = result;
-      return true;
+      return result;
     } catch (e) {
       return Future.error(e);
     }
