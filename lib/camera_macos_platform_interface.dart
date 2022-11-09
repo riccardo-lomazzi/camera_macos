@@ -44,4 +44,8 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
   Future<CameraMacOSFile?> stopVideoRecording() {
     throw UnimplementedError("");
   }
+
+  Future<bool?> destroy() {
+    throw UnimplementedError("");
+  }
 }

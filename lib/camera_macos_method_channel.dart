@@ -14,6 +14,8 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   bool methodCallHandlerSet = false;
 
+  bool isDestroyed = false;
+
   @override
   Future<CameraMacOSArguments?> initialize({
     required CameraMacOSMode cameraMacOSMode,
@@ -90,6 +92,17 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           bytes: result["videoData"] as Uint8List?,
         );
       }
+    } catch (e) {
+      return Future.error(e);
+    }
+  }
+
+  @override
+  Future<bool?> destroy() async {
+    try {
+      final bool result = await methodChannel.invokeMethod('destroy') ?? false;
+      isDestroyed = result;
+      return true;
     } catch (e) {
       return Future.error(e);
     }

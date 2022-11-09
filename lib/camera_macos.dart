@@ -1,6 +1,6 @@
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_controller.dart';
-import 'package:flutter/foundation.dart';
+import 'package:camera_macos/camera_macos_method_channel.dart';
 import 'package:flutter/material.dart';
 
 import 'camera_macos_platform_interface.dart';
@@ -12,6 +12,7 @@ class CameraMacOSView extends StatefulWidget {
   final CameraMacOSMode cameraMode;
   final Widget Function(Object?)? onCameraLoading;
   final Function(CameraMacOSController) onCameraInizialized;
+  final Widget Function()? onCameraDestroyed;
 
   const CameraMacOSView({
     Key? key,
@@ -19,14 +20,14 @@ class CameraMacOSView extends StatefulWidget {
     required this.cameraMode,
     required this.onCameraInizialized,
     this.onCameraLoading,
+    this.onCameraDestroyed,
   }) : super(key: key);
 
   @override
   CameraMacOSViewState createState() => CameraMacOSViewState();
 }
 
-class CameraMacOSViewState extends State<CameraMacOSView>
-    with WidgetsBindingObserver {
+class CameraMacOSViewState extends State<CameraMacOSView> {
   late CameraMacOSArguments arguments;
   late Future<CameraMacOSArguments?> initializeCameraFuture;
 
@@ -71,6 +72,16 @@ class CameraMacOSViewState extends State<CameraMacOSView>
             return Center(
               child: CircularProgressIndicator(),
             );
+          }
+        }
+
+        if (CameraMacOSPlatform.instance is MethodChannelCameraMacOS &&
+            (CameraMacOSPlatform.instance as MethodChannelCameraMacOS)
+                .isDestroyed) {
+          if (widget.onCameraDestroyed != null) {
+            return widget.onCameraDestroyed!();
+          } else {
+            return Container();
           }
         }
 

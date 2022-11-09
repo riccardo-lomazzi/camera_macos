@@ -25,4 +25,8 @@ class CameraMacOSController {
     isRecording = false;
     return _platformInstance.stopVideoRecording();
   }
+
+  Future<bool?> destroy() {
+    return _platformInstance.destroy();
+  }
 }

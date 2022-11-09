@@ -1,3 +1,6 @@
+## 0.0.4
+* Added Destroy method
+
 ## 0.0.3
 * Fixed CameraMacOSFile wrong casting
 

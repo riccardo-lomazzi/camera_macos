@@ -21,7 +21,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     // The asset writer to write a file on disk
     var videoWriter: AVAssetWriter!
-    var videoWriterInputPixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor!
     
     // Output channel for calling Flutter-code methods
     var outputChannel: FlutterMethodChannel!
@@ -31,6 +30,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var isRecording: Bool = false
     var i: Int = 0
     var videoOutputQueue: DispatchQueue!
+    var isDestroyed = false
     
     init(_ registry: FlutterTextureRegistry, _ outputChannel: FlutterMethodChannel) {
         self.registry = registry
@@ -91,6 +91,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     func initCamera(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
         self.requestPermission { granted in
             if granted {
+                self.isDestroyed = false
                 self.textureId = self.registry.register(self)
                 self.captureSession = AVCaptureSession()
                 self.captureSession.beginConfiguration()
@@ -139,7 +140,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     newCameraObject.unlockForConfiguration()
                     
                     let videoInput = try AVCaptureDeviceInput(device: newCameraObject)
-                    let audioInput = try AVCaptureDeviceInput(device: newMicrophoneObject)
+//                    let audioInput = try AVCaptureDeviceInput(device: newMicrophoneObject)
                     
                     if self.captureSession.canAddInput(videoInput) {
                         self.captureSession.addInput(videoInput)
@@ -213,16 +214,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     {
                         videoWriter.add(videoWriterAudioInput)
                     }
-                    
-                    // PixelWriter
-                    self.videoWriterInputPixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(
-                        assetWriterInput: videoWriterVideoInput,
-                        sourcePixelBufferAttributes: [
-                            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-                            kCVPixelBufferWidthKey as String: 1280,
-                            kCVPixelBufferHeightKey as String: 768
-                        ]
-                    )
                     
                     guard outputInitialized else {
                         result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize output for camera", details: nil))
@@ -325,30 +316,46 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     func destroy(_ result: @escaping FlutterResult) {
-        if (videoDevice == nil) {
+        if (self.videoDevice == nil) {
             result(FlutterError(code: "CAMERA_DESTROY_ERROR",
                                 message: "Called destroy() while already destroyed!",
                                 details: nil))
             return
         }
-        captureSession.stopRunning()
-        for input in captureSession.inputs {
-            captureSession.removeInput(input)
-        }
-        for output in captureSession.outputs {
-            captureSession.removeOutput(output)
-        }
-        registry.unregisterTexture(textureId)
         
-        latestBuffer = nil
-        captureSession = nil
-        videoDevice = nil
-        textureId = nil
+        self.isDestroyed = true
         
-        result(nil)
+        if self.isRecording, let videoWriter = videoWriter, videoWriter.status == .writing {
+            videoWriter.cancelWriting()
+            self.isRecording = false
+            self.videoWriter = nil
+        }
+        
+        self.captureSession.stopRunning()
+        for input in self.captureSession.inputs {
+            self.captureSession.removeInput(input)
+        }
+        for output in self.captureSession.outputs {
+            self.captureSession.removeOutput(output)
+        }
+        
+        self.registry.unregisterTexture(self.textureId)
+        
+        self.latestBuffer = nil
+        self.captureSession = nil
+        self.videoDevice = nil
+        self.textureId = nil
+        
+        result(true)
+        
     }
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        
+        guard !isDestroyed else {
+            return
+        }
+        
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
         registry.textureFrameAvailable(textureId)
         

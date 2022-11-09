@@ -90,6 +90,9 @@ class _MyAppState extends State<MyApp> {
                               macOSController = controller;
                             });
                           },
+                          onCameraDestroyed: () {
+                            return Text("Camera Destroyed!");
+                          },
                         ),
                         lastImagePreviewData != null
                             ? Container(
@@ -118,6 +121,7 @@ class _MyAppState extends State<MyApp> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         MaterialButton(
                           color: Colors.lightBlue,
@@ -131,12 +135,23 @@ class _MyAppState extends State<MyApp> {
                             });
                           },
                         ),
+                        MaterialButton(
+                          color: Colors.red,
+                          textColor: Colors.white,
+                          child: Text("Destroy"),
+                          onPressed: () async {
+                            if (macOSController != null) {
+                              await macOSController?.destroy();
+                              setState(() {});
+                            }
+                          },
+                        ),
                         Visibility(
                           visible: cameraMode == CameraMacOSMode.video,
                           child: Expanded(
                             child: Padding(
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                                  const EdgeInsets.symmetric(horizontal: 12.0),
                               child: TextField(
                                 controller: durationController,
                                 decoration: InputDecoration(
