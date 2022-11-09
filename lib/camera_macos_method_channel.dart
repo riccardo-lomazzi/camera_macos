@@ -1,5 +1,6 @@
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
+import 'package:camera_macos/camera_macos_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -41,11 +42,18 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<Uint8List?> takePicture() async {
+  Future<CameraMacOSFile?> takePicture() async {
     try {
-      final result =
-          await methodChannel.invokeMethod('takePicture') as Uint8List?;
-      return result;
+      final Map<String, dynamic>? result =
+          await methodChannel.invokeMapMethod<String, dynamic>('takePicture');
+      if (result == null) {
+        throw FlutterError("Invalid result");
+      }
+      if (result["error"] != null) {
+        throw result["error"];
+      } else {
+        return result["imageData"] as CameraMacOSFile?;
+      }
     } catch (e) {
       return Future.error(e);
     }
@@ -55,7 +63,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   Future<bool> startVideoRecording({double? maxVideoDuration}) async {
     try {
       final result = await methodChannel.invokeMethod(
-            'recordVideo',
+            'startRecording',
             {
               "maxVideoDuration": maxVideoDuration,
             },
@@ -68,11 +76,20 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<String?> stopVideoRecording() async {
+  Future<CameraMacOSFile?> stopVideoRecording() async {
     try {
-      final result =
-          await methodChannel.invokeMethod('stopRecording') as String?;
-      return result;
+      final Map<String, dynamic>? result =
+          await methodChannel.invokeMapMethod<String, dynamic>('stopRecording');
+      if (result == null) {
+        throw FlutterError("Invalid result");
+      }
+      if (result["error"] != null) {
+        throw result["error"];
+      } else {
+        return CameraMacOSFile(
+          bytes: result["videoData"] as Uint8List?,
+        );
+      }
     } catch (e) {
       return Future.error(e);
     }

@@ -95,8 +95,8 @@ class CameraMacOSViewState extends State<CameraMacOSView>
   @override
   void didUpdateWidget(CameraMacOSView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // if camera mode has changed mode, reinitialize the camera
     if (oldWidget.cameraMode != widget.cameraMode) {
-      // if camera mode is different, reset controller
       initializeCameraFuture = CameraMacOSPlatform.instance
           .initialize(
         cameraMacOSMode: widget.cameraMode,

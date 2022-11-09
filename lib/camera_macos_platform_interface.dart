@@ -1,5 +1,6 @@
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
+import 'package:camera_macos/camera_macos_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -32,7 +33,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<Uint8List?> takePicture() {
+  Future<CameraMacOSFile?> takePicture() {
     throw UnimplementedError("");
   }
 
@@ -40,7 +41,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<String?> stopVideoRecording() {
+  Future<CameraMacOSFile?> stopVideoRecording() {
     throw UnimplementedError("");
   }
 }

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos.dart';
+import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
 import 'package:camera_macos/camera_macos_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,13 +24,13 @@ class MockCameraMacOSPlatform
   }
 
   @override
-  Future<String?> stopVideoRecording() {
+  Future<CameraMacOSFile?> stopVideoRecording() {
     // TODO: implement stopRecording
     throw UnimplementedError();
   }
 
   @override
-  Future<Uint8List?> takePicture() {
+  Future<CameraMacOSFile?> takePicture() {
     // TODO: implement takePicture
     throw UnimplementedError();
   }

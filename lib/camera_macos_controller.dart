@@ -1,6 +1,6 @@
 import 'package:camera_macos/camera_macos_arguments.dart';
+import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_platform_interface.dart';
-import 'package:flutter/foundation.dart';
 
 class CameraMacOSController {
   CameraMacOSPlatform _platformInstance;
@@ -12,7 +12,7 @@ class CameraMacOSController {
     this._arguments,
   );
 
-  Future<Uint8List?> takePicture() {
+  Future<CameraMacOSFile?> takePicture() {
     return _platformInstance.takePicture();
   }
 
@@ -21,7 +21,7 @@ class CameraMacOSController {
     return _platformInstance.startVideoRecording();
   }
 
-  Future<String?> stopRecording() {
+  Future<CameraMacOSFile?> stopRecording() {
     isRecording = false;
     return _platformInstance.stopVideoRecording();
   }
