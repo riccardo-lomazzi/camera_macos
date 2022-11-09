@@ -52,7 +52,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
       if (result["error"] != null) {
         throw result["error"];
       } else {
-        return result["imageData"] as CameraMacOSFile?;
+        return CameraMacOSFile(bytes: result["imageData"] as Uint8List?);
       }
     } catch (e) {
       return Future.error(e);
