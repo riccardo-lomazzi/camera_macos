@@ -16,7 +16,7 @@ class MockCameraMacOSPlatform
   }
 
   @override
-  Future<bool> startVideoRecording({double? maxVideoDuration}) {
+  Future<bool> startVideoRecording({double? maxVideoDuration, String? url}) {
     // TODO: implement recordVideo
     throw UnimplementedError();
   }

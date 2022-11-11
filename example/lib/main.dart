@@ -4,6 +4,8 @@ import 'package:camera_macos/camera_macos_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as pathJoiner;
 
 void main() {
   runApp(const MyApp());
@@ -60,6 +62,9 @@ class _MyAppState extends State<MyApp> {
     }
     return label;
   }
+
+  Future<String> get videoFilePath async => pathJoiner.join(
+      (await getApplicationDocumentsDirectory()).path, "output.mp4");
 
   @override
   Widget build(BuildContext context) {
@@ -208,9 +213,7 @@ class _MyAppState extends State<MyApp> {
                                         });
                                       }
                                     } else {
-                                      setState(() {
-                                        macOSController!.recordVideo();
-                                      });
+                                      startRecording();
                                     }
                                     break;
                                 }
@@ -245,5 +248,14 @@ class _MyAppState extends State<MyApp> {
         },
       ),
     );
+  }
+
+  Future<void> startRecording() async {
+    String urlPath = await videoFilePath;
+    await macOSController!.recordVideo(
+      maxVideoDuration: durationValue,
+      url: urlPath,
+    );
+    setState(() {});
   }
 }

@@ -37,7 +37,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<bool> startVideoRecording({double? maxVideoDuration}) {
+  Future<bool> startVideoRecording({double? maxVideoDuration, String? url}) {
     throw UnimplementedError("");
   }
 

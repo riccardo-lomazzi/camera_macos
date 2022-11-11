@@ -22,8 +22,10 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     // The asset writer to write a file on disk
     var videoWriter: AVAssetWriter!
     
-    // Output channel for calling Flutter-code methods
-    var outputChannel: FlutterMethodChannel!
+    // Temp variabile to store FlutterResult methods
+    var methodResult: FlutterResult!
+    var videoOutputFileURL: URL!
+    
     
     // Semaphore variable
     var isTakingPicture: Bool = false
@@ -32,16 +34,14 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var videoOutputQueue: DispatchQueue!
     var isDestroyed = false
     
-    init(_ registry: FlutterTextureRegistry, _ outputChannel: FlutterMethodChannel) {
+    init(_ registry: FlutterTextureRegistry) {
         self.registry = registry
-        self.outputChannel = outputChannel
         super.init()
     }
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let inputChannel = FlutterMethodChannel(name: "camera_macos", binaryMessenger: registrar.messenger)
-        let outputChannel = FlutterMethodChannel(name: "camera_macos", binaryMessenger: registrar.messenger)
-        let instance = CameraMacosPlugin(registrar.textures, outputChannel)
+        let instance = CameraMacosPlugin(registrar.textures)
         registrar.addMethodCallDelegate(instance, channel: inputChannel)
     }
     
@@ -82,13 +82,19 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         }
     }
     
-    var videoFileURL: URL {
+    func generateVideoFileURL(randomGUID: Bool = false) -> URL {
         let paths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
-        let fileUrl = paths[0].appendingPathComponent("output.mp4")
+        var fileUrl = paths[0].appendingPathComponent("output.mp4")
+        if randomGUID {
+            fileUrl = paths[0].appendingPathComponent(UUID().uuidString + ".mp4")
+        }
         return fileUrl
     }
     
     func initCamera(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
+        if let captureSession = self.captureSession, captureSession.isRunning {
+            captureSession.stopRunning()
+        }
         self.requestPermission { granted in
             if granted {
                 self.isDestroyed = false
@@ -175,46 +181,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         outputInitialized = true
                     }
                     
-                    // Set up the AVAssetWriter (to write to file)
-                    self.videoWriter = try AVAssetWriter(outputURL: self.videoFileURL, fileType: AVFileType.mp4)
-                    print("Setup AVAssetWriter")
-
-                    guard let videoWriter = self.videoWriter else {
-                        result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize Video Writer", details: nil))
-                        return
-                    }
-
-                    // Add Video Writer Video Input
-                    var videoWriterVideoInputSettings: [String : Any] = [
-                        AVVideoWidthKey  : 720,
-                        AVVideoHeightKey : 1280,
-                    ]
-                    if #available(macOS 10.13, *) {
-                        videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecType.h264
-                    } else {
-                        videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecH264
-                    }
-                    let videoWriterVideoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoWriterVideoInputSettings)
-                    videoWriterVideoInput.expectsMediaDataInRealTime = true
-                    if (videoWriter.canAdd(videoWriterVideoInput))
-                    {
-                        videoWriter.add(videoWriterVideoInput)
-                    }
-
-                    // Add Video Writer Audio Input
-                    let videoWriterAudioInputSettings : [String : Any] = [
-                        AVFormatIDKey : kAudioFormatMPEG4AAC,
-                        AVSampleRateKey : 44100,
-                        AVEncoderBitRateKey : 64000,
-                        AVNumberOfChannelsKey: 1
-                    ]
-                    let videoWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: videoWriterAudioInputSettings)
-                    videoWriterAudioInput.expectsMediaDataInRealTime = true
-                    if (videoWriter.canAdd(videoWriterAudioInput))
-                    {
-                        videoWriter.add(videoWriterAudioInput)
-                    }
-                    
                     guard outputInitialized else {
                         result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize output for camera", details: nil))
                         return
@@ -246,72 +212,155 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     func startRecording(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
-        guard let videoWriter = videoWriter else {
-            result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "AVAssetWriter not found", details: nil))
-            return
-        }
-        guard let cameraSession = captureSession, let masterClock = cameraSession.masterClock else {
-            result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "MasterClock not found", details: nil))
-            return
-        }
-        if(!isRecording) {
-            isRecording = true
-            // Remove old file
-            let paths = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
-            let fileUrl = paths[0].appendingPathComponent("output.mp4")
-            try? FileManager.default.removeItem(at: fileUrl)
-            videoOutputQueue = DispatchQueue(label: "videoQueue", qos: .utility, attributes: .concurrent, autoreleaseFrequency: DispatchQueue.AutoreleaseFrequency.inherit, target: DispatchQueue.global())
-            guard let videoOutputQueue = videoOutputQueue else {
-                result(FlutterError(code: "START_RECORDING_ERROR", message: "videoOutputQueue not initialized", details: nil))
-                isRecording = false
-                return
-            }
-            if let maxVideoDuration = arguments["maxVideoDuration"] as? Double, maxVideoDuration > 0 {
-                if #available(macOS 10.12, *) {
-                    Timer.scheduledTimer(withTimeInterval: maxVideoDuration, repeats: false) { timer in
-                        self.stopRecording(result)
+        // Set up the AVAssetWriter (to write to file)
+        do {
+            if(!isRecording) {
+                
+                var fileUrl: URL!
+                
+                if let selectedURL = arguments["url"] as? String, !selectedURL.isEmpty {
+                    fileUrl = URL(fileURLWithPath: selectedURL)
+                } else {
+                    fileUrl = self.generateVideoFileURL(randomGUID: false)
+                    
+                }
+                
+                // Remove old file
+                try? FileManager.default.removeItem(at: fileUrl)
+                self.videoOutputFileURL = fileUrl
+                
+                self.videoWriter = try AVAssetWriter(outputURL: fileUrl, fileType: AVFileType.mp4)
+                print("Setting up AVAssetWriter")
+
+                guard let videoWriter = self.videoWriter else {
+                    result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize Video Writer", details: nil))
+                    return
+                }
+                
+                videoOutputQueue = DispatchQueue(label: "videoQueue", qos: .utility, attributes: .concurrent, autoreleaseFrequency: DispatchQueue.AutoreleaseFrequency.inherit, target: DispatchQueue.global())
+                guard let videoOutputQueue = videoOutputQueue else {
+                    result(FlutterError(code: "START_RECORDING_ERROR", message: "videoOutputQueue not initialized", details: nil))
+                    isRecording = false
+                    return
+                }
+                
+                videoOutputQueue.async {
+                    // Add Video Writer Video Input
+                    var videoWriterVideoInputSettings: [String : Any] = [
+                        AVVideoWidthKey  : 1280,
+                        AVVideoHeightKey : 720,
+                    ]
+                    if #available(macOS 10.13, *) {
+                        videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecType.h264
+                    } else {
+                        videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecH264
+                    }
+                    let videoWriterVideoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoWriterVideoInputSettings)
+                    videoWriterVideoInput.expectsMediaDataInRealTime = true
+                    if (videoWriter.canAdd(videoWriterVideoInput))
+                    {
+                        videoWriter.add(videoWriterVideoInput)
+                    }
+
+                    // Add Video Writer Audio Input
+                    let videoWriterAudioInputSettings : [String : Any] = [
+                        AVFormatIDKey : kAudioFormatMPEG4AAC,
+                        AVSampleRateKey : 44100,
+                        AVEncoderBitRateKey : 64000,
+                        AVNumberOfChannelsKey: 1
+                    ]
+                    let videoWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: videoWriterAudioInputSettings)
+                    videoWriterAudioInput.expectsMediaDataInRealTime = true
+                    if (videoWriter.canAdd(videoWriterAudioInput))
+                    {
+                        videoWriter.add(videoWriterAudioInput)
+                    }
+                    
+                    if let maxVideoDuration = arguments["maxVideoDuration"] as? Double, maxVideoDuration > 0 {
+                        if #available(macOS 10.12, *) {
+                            Timer.scheduledTimer(withTimeInterval: maxVideoDuration, repeats: false) { timer in
+                                if self.isRecording {
+                                    self.stopRecording(result)
+                                }
+                            }
+                        } else {
+                            self.methodResult = result
+                            Timer.scheduledTimer(timeInterval: maxVideoDuration, target: self, selector: #selector(self.stopRecordingSelector), userInfo: nil, repeats: false)
+                        }
+                    }
+                    
+                    var cmClock: CMClock!
+                    if #available(macOS 12.3, *) {
+                        cmClock = self.captureSession.synchronizationClock
+                    } else {
+                        cmClock = self.captureSession.masterClock
+                    }
+                    
+                    print("Finished Setting up AVAssetWriter")
+                    
+                    self.isRecording = true
+                    print("Starting AVAssetWriter Writing")
+                    if videoWriter.startWriting() {
+                        videoWriter.startSession(atSourceTime: CMClockGetTime(cmClock))
+                        DispatchQueue.main.async {
+                            result(true)
+                        }
+                    } else {
+                        result(FlutterError(code: "START_RECORDING_ERROR", message: "Could not start AVAssetWriter session", details: nil))
                     }
                 }
-                #warning("Need to implement code for macOS 10.11 or older versions")
+            } else {
+                result(FlutterError(code: "CONCURRENCY_ERROR", message: "Already recording video", details: nil))
             }
-            videoOutputQueue.async {
-                videoWriter.startWriting()
-                videoWriter.startSession(atSourceTime: CMClockGetTime(masterClock))
-            }
-            result(true)
-        } else {
-            result(FlutterError(code: "CONCURRENCY_ERROR", message: "Already recording video", details: nil))
+        } catch(let error) {
+            result(FlutterError(code: "START_RECORDING_ERROR", message: error.localizedDescription, details: nil))
+            return
         }
+        
+        
     }
     
     func stopRecording(_ result: @escaping FlutterResult) {
-        guard let videoWriter = videoWriter, let videoWriterVideoInput = videoWriter.inputs.first(where: { $0.mediaType == .video }), let videoWriterAudioInput = videoWriter.inputs.first(where: { $0.mediaType == .audio }) else {
+        guard let videoWriter = videoWriter, let videoOutputFileURL = self.videoOutputFileURL, let videoWriterVideoInput = videoWriter.inputs.first(where: { $0.mediaType == .video }), let videoWriterAudioInput = videoWriter.inputs.first(where: { $0.mediaType == .audio }), let videoOutputQueue = self.videoOutputQueue else {
             result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "AVAssetWriter not found", details: nil))
             return
         }
-        if(!isRecording) {
+        if(!self.isRecording) {
             result(FlutterError(code: "CAMERA_NOT_RECORDING_ERROR", message: "Camera not recording", details: nil))
         } else {
-            if videoWriter.status == .writing {
-                videoWriterVideoInput.markAsFinished()
-                videoWriterAudioInput.markAsFinished()
-            }
-            videoWriter.finishWriting {
-                self.isRecording = false
-                DispatchQueue.main.async {
-                    switch(videoWriter.status) {
-                    case .completed:
-                        guard let videoData = try? Data(contentsOf: self.videoFileURL), !videoData.isEmpty  else {
-                            result(["error": FlutterError(code: "ASSET_WRITER_FAIL", message: "File is empty", details: nil)])
-                            return
+            self.isRecording = false
+            videoOutputQueue.async {
+                if videoWriter.status == .writing {
+                    videoWriterVideoInput.markAsFinished()
+                    videoWriterAudioInput.markAsFinished()
+                }
+                videoWriter.finishWriting {
+                    print("Finished AVAssetWriter Writing")
+                    DispatchQueue.main.async {
+                        switch(videoWriter.status) {
+                        case .completed:
+                            guard let videoData = try? Data(contentsOf: videoOutputFileURL), !videoData.isEmpty  else {
+                                result(["error": FlutterError(code: "ASSET_WRITER_FAIL", message: "File is empty", details: nil)])
+                                return
+                            }
+                            print("Video Recorded")
+                            result(["videoData": videoData, "error": nil])
+                        default:
+                            result(FlutterError(code: "ASSET_WRITER_FAIL", message: "File not saved - \(videoWriter.error?.localizedDescription ?? "")", details: nil))
                         }
-                        result(["videoData": videoData, "error": nil])
-                    default:
-                        result(FlutterError(code: "ASSET_WRITER_FAIL", message: "File not saved", details: nil))
                     }
                 }
             }
-            
+        }
+    }
+    
+    @objc
+    func stopRecordingSelector(){
+        guard let methodResult = self.methodResult else {
+            fatalError("MethodResult not found")
+        }
+        if self.isRecording {
+            self.stopRecording(methodResult)
         }
     }
     
@@ -360,20 +409,24 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         registry.textureFrameAvailable(textureId)
         
         if isRecording {
-            guard let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
-                  CMSampleBufferDataIsReady(sampleBuffer) else { return }
-            
-            if let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, audio.isReadyForMoreMediaData
-            {
-                videoOutputQueue.async {
-                    audio.append(sampleBuffer)
+            if let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
+                  CMSampleBufferDataIsReady(sampleBuffer) {
+                if let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, audio.isReadyForMoreMediaData
+                {
+                    videoOutputQueue.async {
+                        if self.isRecording {
+                            audio.append(sampleBuffer)
+                        }
+                    }
                 }
-            }
-            
-            if let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), camera.isReadyForMoreMediaData {
                 
-                videoOutputQueue.async {
-                    camera.append(sampleBuffer)
+                if let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), camera.isReadyForMoreMediaData {
+                    
+                    videoOutputQueue.async {
+                        if self.isRecording {
+                            camera.append(sampleBuffer)
+                        }
+                    }
                 }
             }
         }

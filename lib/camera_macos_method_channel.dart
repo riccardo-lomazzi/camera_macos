@@ -14,6 +14,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   bool methodCallHandlerSet = false;
 
+  bool isRecording = false;
   bool isDestroyed = false;
 
   @override
@@ -63,17 +64,21 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<bool> startVideoRecording({double? maxVideoDuration}) async {
+  Future<bool> startVideoRecording(
+      {double? maxVideoDuration, String? url}) async {
     try {
       final result = await methodChannel.invokeMethod(
             'startRecording',
             {
               "maxVideoDuration": maxVideoDuration,
+              "url": url,
             },
           ) as bool? ??
           false;
+      isRecording = result;
       return result;
     } catch (e) {
+      isRecording = false;
       return Future.error(e);
     }
   }
@@ -89,11 +94,13 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
       if (result["error"] != null) {
         throw result["error"];
       } else {
+        isRecording = false;
         return CameraMacOSFile(
           bytes: result["videoData"] as Uint8List?,
         );
       }
     } catch (e) {
+      isRecording = false;
       return Future.error(e);
     }
   }
@@ -103,6 +110,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     try {
       final bool result = await methodChannel.invokeMethod('destroy') ?? false;
       isDestroyed = result;
+      isRecording = false;
       return result;
     } catch (e) {
       return Future.error(e);

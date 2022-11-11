@@ -6,7 +6,6 @@ import 'package:camera_macos/camera_macos_platform_interface.dart';
 class CameraMacOSController {
   CameraMacOSPlatform _platformInstance;
   CameraMacOSArguments _arguments;
-  bool isRecording = false;
 
   CameraMacOSController(
     this._platformInstance,
@@ -17,13 +16,12 @@ class CameraMacOSController {
     return _platformInstance.takePicture();
   }
 
-  Future<bool?> recordVideo() {
-    isRecording = true;
-    return _platformInstance.startVideoRecording();
+  Future<bool?> recordVideo({double? maxVideoDuration, String? url}) {
+    return _platformInstance.startVideoRecording(
+        maxVideoDuration: maxVideoDuration, url: url);
   }
 
   Future<CameraMacOSFile?> stopRecording() {
-    isRecording = false;
     return _platformInstance.stopVideoRecording();
   }
 
@@ -31,7 +29,8 @@ class CameraMacOSController {
     return _platformInstance.destroy();
   }
 
-  bool get isDestroyed {
-    return (_platformInstance as MethodChannelCameraMacOS).isDestroyed;
-  }
+  bool get isRecording =>
+      (_platformInstance as MethodChannelCameraMacOS).isRecording;
+  bool get isDestroyed =>
+      (_platformInstance as MethodChannelCameraMacOS).isDestroyed;
 }
