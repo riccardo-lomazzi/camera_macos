@@ -257,7 +257,7 @@ class _MyAppState extends State<MyApp> {
       maxVideoDuration: durationValue,
       url: urlPath,
       onVideoRecordingFinished:
-          (Map<String, dynamic>? result, CameraMacOSException? exception) {
+          (CameraMacOSFile? result, CameraMacOSException? exception) {
         setState(() {});
         if (exception != null) {
           showDialog(

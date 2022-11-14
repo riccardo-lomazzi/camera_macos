@@ -20,8 +20,7 @@ class CameraMacOSController {
   Future<bool?> recordVideo({
     double? maxVideoDuration,
     String? url,
-    Function(Map<String, dynamic>?, CameraMacOSException?)?
-        onVideoRecordingFinished,
+    Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) {
     return _platformInstance.startVideoRecording(
       maxVideoDuration: maxVideoDuration,

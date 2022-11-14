@@ -70,8 +70,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   Future<bool> startVideoRecording({
     double? maxVideoDuration,
     String? url,
-    Function(Map<String, dynamic>?, CameraMacOSException?)?
-        onVideoRecordingFinished,
+    Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) async {
     try {
       registeredCallbacks["onVideoRecordingFinished"] =
@@ -136,13 +135,15 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
         isRecording = false;
         if (registeredCallbacks["onVideoRecordingFinished"] != null) {
           dynamic args = call.arguments;
-          Map<String, dynamic>? result;
+          CameraMacOSFile? result;
           CameraMacOSException? exception;
           if (args is Map<String, dynamic>) {
             if (args["error"] != null) {
               exception = CameraMacOSException.fromMap(args["error"]);
             }
-            result = args;
+            result = CameraMacOSFile(
+              bytes: args["videoData"] as Uint8List?,
+            );
           }
           registeredCallbacks["onVideoRecordingFinished"]!(result, exception);
         }

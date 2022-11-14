@@ -41,8 +41,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
   Future<bool> startVideoRecording({
     double? maxVideoDuration,
     String? url,
-    Function(Map<String, dynamic>?, CameraMacOSException?)?
-        onVideoRecordingFinished,
+    Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) {
     throw UnimplementedError("");
   }

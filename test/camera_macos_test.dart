@@ -20,8 +20,7 @@ class MockCameraMacOSPlatform
   Future<bool> startVideoRecording({
     double? maxVideoDuration,
     String? url,
-    Function(Map<String, dynamic>?, CameraMacOSException?)?
-        onVideoRecordingFinished,
+    Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) {
     // TODO: implement recordVideo
     throw UnimplementedError();
