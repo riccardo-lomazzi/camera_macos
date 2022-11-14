@@ -2,7 +2,7 @@ import Cocoa
 import FlutterMacOS
 import AVFoundation
 
-public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
+public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, AVAssetWriterDelegate {
     
     let registry: FlutterTextureRegistry
     
@@ -229,13 +229,15 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 try? FileManager.default.removeItem(at: fileUrl)
                 self.videoOutputFileURL = fileUrl
                 
-                self.videoWriter = try AVAssetWriter(outputURL: fileUrl, fileType: AVFileType.mp4)
+                self.videoWriter = try AVAssetWriter(outputURL: fileUrl, fileType: .mp4)
                 print("Setting up AVAssetWriter")
 
                 guard let videoWriter = self.videoWriter else {
                     result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize Video Writer", details: nil))
                     return
                 }
+                
+                videoWriter.shouldOptimizeForNetworkUse = true
                 
                 videoOutputQueue = DispatchQueue(label: "videoQueue", qos: .utility, attributes: .concurrent, autoreleaseFrequency: DispatchQueue.AutoreleaseFrequency.inherit, target: DispatchQueue.global())
                 guard let videoOutputQueue = videoOutputQueue else {
@@ -255,6 +257,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     } else {
                         videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecH264
                     }
+                    
                     let videoWriterVideoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoWriterVideoInputSettings)
                     videoWriterVideoInput.expectsMediaDataInRealTime = true
                     if (videoWriter.canAdd(videoWriterVideoInput))
@@ -269,6 +272,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         AVEncoderBitRateKey : 64000,
                         AVNumberOfChannelsKey: 1
                     ]
+                    
                     let videoWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: videoWriterAudioInputSettings)
                     videoWriterAudioInput.expectsMediaDataInRealTime = true
                     if (videoWriter.canAdd(videoWriterAudioInput))
@@ -276,33 +280,27 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         videoWriter.add(videoWriterAudioInput)
                     }
                     
-                    if let maxVideoDuration = arguments["maxVideoDuration"] as? Double, maxVideoDuration > 0 {
-                        if #available(macOS 10.12, *) {
-                            Timer.scheduledTimer(withTimeInterval: maxVideoDuration, repeats: false) { timer in
-                                if self.isRecording {
-                                    self.stopRecording(result)
-                                }
-                            }
-                        } else {
-                            self.methodResult = result
-                            Timer.scheduledTimer(timeInterval: maxVideoDuration, target: self, selector: #selector(self.stopRecordingSelector), userInfo: nil, repeats: false)
-                        }
-                    }
-                    
-                    var cmClock: CMClock!
-                    if #available(macOS 12.3, *) {
-                        cmClock = self.captureSession.synchronizationClock
-                    } else {
-                        cmClock = self.captureSession.masterClock
-                    }
-                    
                     print("Finished Setting up AVAssetWriter")
                     
                     self.isRecording = true
                     print("Starting AVAssetWriter Writing")
                     if videoWriter.startWriting() {
-                        videoWriter.startSession(atSourceTime: CMClockGetTime(cmClock))
+                        print("Started AVAssetWriter Writing")
+                        videoWriter.startSession(atSourceTime: CMTimeMakeWithSeconds(CACurrentMediaTime(), preferredTimescale: 240))
                         DispatchQueue.main.async {
+                            if let maxVideoDuration = arguments["maxVideoDuration"] as? Double, maxVideoDuration > 0 {
+                                if #available(macOS 10.12, *) {
+                                    Timer.scheduledTimer(withTimeInterval: maxVideoDuration, repeats: false) { timer in
+                                        if self.isRecording {
+                                            self.stopRecording(result)
+                                        }
+                                        timer.invalidate()
+                                    }
+                                } else {
+                                    self.methodResult = result
+                                    Timer.scheduledTimer(timeInterval: maxVideoDuration, target: self, selector: #selector(self.stopRecordingSelector), userInfo: nil, repeats: false)
+                                }
+                            }
                             result(true)
                         }
                     } else {
@@ -343,8 +341,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 result(["error": FlutterError(code: "ASSET_WRITER_FAIL", message: "File is empty", details: nil)])
                                 return
                             }
-                            print("Video Recorded")
+                            print("Video Recorded And Saved At: \(videoOutputFileURL.absoluteURL)")
                             result(["videoData": videoData, "error": nil])
+                            self.videoWriter = nil
                         default:
                             result(FlutterError(code: "ASSET_WRITER_FAIL", message: "File not saved - \(videoWriter.error?.localizedDescription ?? "")", details: nil))
                         }
@@ -408,28 +407,21 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
         registry.textureFrameAvailable(textureId)
         
-        if isRecording {
-            if let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
-                  CMSampleBufferDataIsReady(sampleBuffer) {
-                if let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, audio.isReadyForMoreMediaData
-                {
-                    videoOutputQueue.async {
-                        if self.isRecording {
-                            audio.append(sampleBuffer)
-                        }
-                    }
+        
+        
+        if isRecording, let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
+           CMSampleBufferDataIsReady(sampleBuffer) {
+            videoOutputQueue.async {
+                if let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, audio.isReadyForMoreMediaData {
+                    audio.append(sampleBuffer)
                 }
-                
                 if let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), camera.isReadyForMoreMediaData {
-                    
-                    videoOutputQueue.async {
-                        if self.isRecording {
-                            camera.append(sampleBuffer)
-                        }
-                    }
+                    camera.append(sampleBuffer)
                 }
             }
         }
+        
+        
         // Limit the analyzer because the texture output will freeze otherwise
         if i / 10 == 1 {
             i = 0
