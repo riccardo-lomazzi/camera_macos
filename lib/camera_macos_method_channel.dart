@@ -1,6 +1,7 @@
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_file.dart';
+import 'package:camera_macos/exceptions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -16,6 +17,8 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   bool isRecording = false;
   bool isDestroyed = false;
+
+  Map<String, Function?> registeredCallbacks = {};
 
   @override
   Future<CameraMacOSArguments?> initialize({
@@ -64,9 +67,19 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<bool> startVideoRecording(
-      {double? maxVideoDuration, String? url}) async {
+  Future<bool> startVideoRecording({
+    double? maxVideoDuration,
+    String? url,
+    Function(Map<String, dynamic>?, CameraMacOSException?)?
+        onVideoRecordingFinished,
+  }) async {
     try {
+      registeredCallbacks["onVideoRecordingFinished"] =
+          onVideoRecordingFinished;
+      if (!methodCallHandlerSet) {
+        methodChannel.setMethodCallHandler(_genericMethodCallHandler);
+        methodCallHandlerSet = true;
+      }
       final result = await methodChannel.invokeMethod(
             'startRecording',
             {
@@ -114,6 +127,28 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
       return result;
     } catch (e) {
       return Future.error(e);
+    }
+  }
+
+  Future<void> _genericMethodCallHandler(MethodCall call) async {
+    switch (call.method) {
+      case "onVideoRecordingFinished":
+        isRecording = false;
+        if (registeredCallbacks["onVideoRecordingFinished"] != null) {
+          dynamic args = call.arguments;
+          Map<String, dynamic>? result;
+          CameraMacOSException? exception;
+          if (args is Map<String, dynamic>) {
+            if (args["error"] != null) {
+              exception = CameraMacOSException.fromMap(args["error"]);
+            }
+            result = args;
+          }
+          registeredCallbacks["onVideoRecordingFinished"]!(result, exception);
+        }
+        break;
+      default:
+        break;
     }
   }
 }

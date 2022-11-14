@@ -3,6 +3,7 @@ import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
 import 'package:camera_macos/camera_macos_platform_interface.dart';
+import 'package:camera_macos/exceptions.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -16,7 +17,12 @@ class MockCameraMacOSPlatform
   }
 
   @override
-  Future<bool> startVideoRecording({double? maxVideoDuration, String? url}) {
+  Future<bool> startVideoRecording({
+    double? maxVideoDuration,
+    String? url,
+    Function(Map<String, dynamic>?, CameraMacOSException?)?
+        onVideoRecordingFinished,
+  }) {
     // TODO: implement recordVideo
     throw UnimplementedError();
   }

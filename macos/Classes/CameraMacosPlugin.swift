@@ -5,6 +5,7 @@ import AVFoundation
 public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, AVAssetWriterDelegate {
     
     let registry: FlutterTextureRegistry
+    let outputChannel: FlutterMethodChannel!
     
     // Texture id of the camera preview
     var textureId: Int64!
@@ -23,7 +24,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var videoWriter: AVAssetWriter!
     
     // Temp variabile to store FlutterResult methods
-    var methodResult: FlutterResult!
     var videoOutputFileURL: URL!
     
     
@@ -34,14 +34,16 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var videoOutputQueue: DispatchQueue!
     var isDestroyed = false
     
-    init(_ registry: FlutterTextureRegistry) {
+    init(_ registry: FlutterTextureRegistry, _ outputChannel: FlutterMethodChannel) {
         self.registry = registry
+        self.outputChannel = outputChannel
         super.init()
     }
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let inputChannel = FlutterMethodChannel(name: "camera_macos", binaryMessenger: registrar.messenger)
-        let instance = CameraMacosPlugin(registrar.textures)
+        let outputChannel = FlutterMethodChannel(name: "camera_macos", binaryMessenger: registrar.messenger)
+        let instance = CameraMacosPlugin(registrar.textures, outputChannel)
         registrar.addMethodCallDelegate(instance, channel: inputChannel)
     }
     
@@ -56,7 +58,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         switch call.method {
         case "initialize":
             guard let arguments = call.arguments as? Dictionary<String, Any> else {
-                result(FlutterError(code: "INVALID_ARGS", message: "", details: nil))
+                result(FlutterError(code: "INVALID_ARGS", message: "", details: nil).toMap)
                 return
             }
             initCamera(arguments, result)
@@ -123,7 +125,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 }
                 
                 guard let newCameraObject: AVCaptureDevice = newCameraObject, let newMicrophoneObject: AVCaptureDevice = newMicrophoneObject else {
-                    result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not find a suitable camera on this device", details: nil))
+                    result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not find a suitable camera on this device", details: nil).toFlutterResult)
                     return
                 }
                 self.videoDevice = newCameraObject
@@ -182,7 +184,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     }
                     
                     guard outputInitialized else {
-                        result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize output for camera", details: nil))
+                        result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize output for camera", details: nil).toFlutterResult)
                         return
                     }
                     
@@ -194,18 +196,18 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     result(answer)
                     
                 } catch(let error) {
-                    result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: error.localizedDescription, details: nil))
+                    result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: error.localizedDescription, details: nil).toFlutterResult)
                     return
                 }
             } else {
-                result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Permission not granted", details: nil))
+                result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Permission not granted", details: nil).toFlutterResult)
             }
         }
     }
     
     func takePicture(_ result: @escaping FlutterResult) {
         guard let imageBuffer = latestBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer), let imageData = nsImage.tiffRepresentation, !imageData.isEmpty else {
-            result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil)])
+            result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil).toMap])
             return
         }
         result(["imageData": imageData, "error": nil])
@@ -233,7 +235,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 print("Setting up AVAssetWriter")
 
                 guard let videoWriter = self.videoWriter else {
-                    result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize Video Writer", details: nil))
+                    result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not initialize Video Writer", details: nil).toFlutterResult)
                     return
                 }
                 
@@ -241,7 +243,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 
                 videoOutputQueue = DispatchQueue(label: "videoQueue", qos: .utility, attributes: .concurrent, autoreleaseFrequency: DispatchQueue.AutoreleaseFrequency.inherit, target: DispatchQueue.global())
                 guard let videoOutputQueue = videoOutputQueue else {
-                    result(FlutterError(code: "START_RECORDING_ERROR", message: "videoOutputQueue not initialized", details: nil))
+                    result(FlutterError(code: "START_RECORDING_ERROR", message: "videoOutputQueue not initialized", details: nil).toFlutterResult)
                     isRecording = false
                     return
                 }
@@ -292,26 +294,29 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 if #available(macOS 10.12, *) {
                                     Timer.scheduledTimer(withTimeInterval: maxVideoDuration, repeats: false) { timer in
                                         if self.isRecording {
-                                            self.stopRecording(result)
+                                            self.stopRecording { callbackResult in
+                                                if let outputChannel = self.outputChannel {
+                                                    outputChannel.invokeMethod("onVideoRecordingFinished", arguments: callbackResult)
+                                                }
+                                            }
                                         }
                                         timer.invalidate()
                                     }
                                 } else {
-                                    self.methodResult = result
                                     Timer.scheduledTimer(timeInterval: maxVideoDuration, target: self, selector: #selector(self.stopRecordingSelector), userInfo: nil, repeats: false)
                                 }
                             }
                             result(true)
                         }
                     } else {
-                        result(FlutterError(code: "START_RECORDING_ERROR", message: "Could not start AVAssetWriter session", details: nil))
+                        result(FlutterError(code: "START_RECORDING_ERROR", message: "Could not start AVAssetWriter session", details: nil).toFlutterResult)
                     }
                 }
             } else {
-                result(FlutterError(code: "CONCURRENCY_ERROR", message: "Already recording video", details: nil))
+                result(FlutterError(code: "CONCURRENCY_ERROR", message: "Already recording video", details: nil).toFlutterResult)
             }
         } catch(let error) {
-            result(FlutterError(code: "START_RECORDING_ERROR", message: error.localizedDescription, details: nil))
+            result(FlutterError(code: "START_RECORDING_ERROR", message: error.localizedDescription, details: nil).toFlutterResult)
             return
         }
         
@@ -320,11 +325,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     func stopRecording(_ result: @escaping FlutterResult) {
         guard let videoWriter = videoWriter, let videoOutputFileURL = self.videoOutputFileURL, let videoWriterVideoInput = videoWriter.inputs.first(where: { $0.mediaType == .video }), let videoWriterAudioInput = videoWriter.inputs.first(where: { $0.mediaType == .audio }), let videoOutputQueue = self.videoOutputQueue else {
-            result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "AVAssetWriter not found", details: nil))
+            result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "AVAssetWriter not found", details: nil).toFlutterResult)
             return
         }
         if(!self.isRecording) {
-            result(FlutterError(code: "CAMERA_NOT_RECORDING_ERROR", message: "Camera not recording", details: nil))
+            result(FlutterError(code: "CAMERA_NOT_RECORDING_ERROR", message: "Camera not recording", details: nil).toFlutterResult)
         } else {
             self.isRecording = false
             videoOutputQueue.async {
@@ -338,14 +343,14 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         switch(videoWriter.status) {
                         case .completed:
                             guard let videoData = try? Data(contentsOf: videoOutputFileURL), !videoData.isEmpty  else {
-                                result(["error": FlutterError(code: "ASSET_WRITER_FAIL", message: "File is empty", details: nil)])
+                                result(["error": FlutterError(code: "ASSET_WRITER_FAIL", message: "File is empty", details: nil).toMap])
                                 return
                             }
                             print("Video Recorded And Saved At: \(videoOutputFileURL.absoluteURL)")
                             result(["videoData": videoData, "error": nil])
                             self.videoWriter = nil
                         default:
-                            result(FlutterError(code: "ASSET_WRITER_FAIL", message: "File not saved - \(videoWriter.error?.localizedDescription ?? "")", details: nil))
+                            result(FlutterError(code: "ASSET_WRITER_FAIL", message: "File not saved - \(videoWriter.error?.localizedDescription ?? "")", details: nil).toFlutterResult)
                         }
                     }
                 }
@@ -355,11 +360,13 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     @objc
     func stopRecordingSelector(){
-        guard let methodResult = self.methodResult else {
-            fatalError("MethodResult not found")
+        guard let outputChannel = self.outputChannel else {
+            fatalError("OutputChannel not found")
         }
         if self.isRecording {
-            self.stopRecording(methodResult)
+            self.stopRecording { callbackResult in
+                outputChannel.invokeMethod("onVideoRecordingFinished", arguments: callbackResult)
+            }
         }
     }
     
@@ -367,7 +374,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         if (self.videoDevice == nil) {
             result(FlutterError(code: "CAMERA_DESTROY_ERROR",
                                 message: "Called destroy() while already destroyed!",
-                                details: nil))
+                                details: nil).toFlutterResult)
             return
         }
         

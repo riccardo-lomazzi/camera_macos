@@ -2,6 +2,7 @@ import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
 import 'package:camera_macos/camera_macos_platform_interface.dart';
+import 'package:camera_macos/exceptions.dart';
 
 class CameraMacOSController {
   CameraMacOSPlatform _platformInstance;
@@ -16,9 +17,17 @@ class CameraMacOSController {
     return _platformInstance.takePicture();
   }
 
-  Future<bool?> recordVideo({double? maxVideoDuration, String? url}) {
+  Future<bool?> recordVideo({
+    double? maxVideoDuration,
+    String? url,
+    Function(Map<String, dynamic>?, CameraMacOSException?)?
+        onVideoRecordingFinished,
+  }) {
     return _platformInstance.startVideoRecording(
-        maxVideoDuration: maxVideoDuration, url: url);
+      maxVideoDuration: maxVideoDuration,
+      url: url,
+      onVideoRecordingFinished: onVideoRecordingFinished,
+    );
   }
 
   Future<CameraMacOSFile?> stopRecording() {

@@ -1,6 +1,7 @@
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos/camera_macos_controller.dart';
 import 'package:camera_macos/camera_macos_file.dart';
+import 'package:camera_macos/exceptions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -255,6 +256,28 @@ class _MyAppState extends State<MyApp> {
     await macOSController!.recordVideo(
       maxVideoDuration: durationValue,
       url: urlPath,
+      onVideoRecordingFinished:
+          (Map<String, dynamic>? result, CameraMacOSException? exception) {
+        setState(() {});
+        if (exception != null) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text(exception.toString()),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      },
     );
     setState(() {});
   }
