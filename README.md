@@ -1,6 +1,6 @@
 # Camera macOS
 
-Implementation of AVKit Camera for macOS.
+Implementation of ```AVKit``` camera for ```macOS```.
 Does basic things.
 Feel free to fork this repository and improve it!
 
