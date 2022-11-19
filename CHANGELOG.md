@@ -1,3 +1,6 @@
+## 0.0.5
+* Added tests
+
 ## 0.0.4
 * Added Destroy method
 

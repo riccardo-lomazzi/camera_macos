@@ -1,6 +1,7 @@
 name: camera_macos
 description: A new Flutter plugin project.
-version: 0.0.4
+version: 0.0.5
+repository: https://github.com/riccardo-lomazzi/camera_macos
 
 environment:
   sdk: '>=2.18.2 <3.0.0'

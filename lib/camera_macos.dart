@@ -44,7 +44,6 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         widget.onCameraInizialized(
           CameraMacOSController(
             CameraMacOSPlatform.instance,
-            value,
           ),
         );
       }
@@ -119,7 +118,6 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
           widget.onCameraInizialized(
             CameraMacOSController(
               CameraMacOSPlatform.instance,
-              value,
             ),
           );
         }

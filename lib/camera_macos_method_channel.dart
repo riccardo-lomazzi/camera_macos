@@ -19,7 +19,9 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   bool isDestroyed = false;
 
   Map<String, Function?> registeredCallbacks = {};
+  String? latestVideoUrl;
 
+  /// Call this method to initialize camera. If you implement the widget in your widget tree, this method is useless.
   @override
   Future<CameraMacOSArguments?> initialize({
     required CameraMacOSMode cameraMacOSMode,
@@ -48,6 +50,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     }
   }
 
+  /// Call this method to take a picture.
   @override
   Future<CameraMacOSFile?> takePicture() async {
     try {
@@ -66,13 +69,20 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     }
   }
 
+  /// Call this method to start a video recording.
   @override
   Future<bool> startVideoRecording({
+    /// Expressed in seconds
     double? maxVideoDuration,
+
+    /// A URL location to save the video
     String? url,
+
+    /// Called only when the video has reached the max duration pointed by maxVideoDuration
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) async {
     try {
+      this.latestVideoUrl = url;
       registeredCallbacks["onVideoRecordingFinished"] =
           onVideoRecordingFinished;
       if (!methodCallHandlerSet) {
@@ -95,6 +105,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     }
   }
 
+  /// Call this method to stop video recording and collect the video data.
   @override
   Future<CameraMacOSFile?> stopVideoRecording() async {
     try {
@@ -117,6 +128,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     }
   }
 
+  /// Destroy the camera instance
   @override
   Future<bool?> destroy() async {
     try {
@@ -142,6 +154,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
               exception = CameraMacOSException.fromMap(args["error"]);
             }
             result = CameraMacOSFile(
+              url: latestVideoUrl,
               bytes: args["videoData"] as Uint8List?,
             );
           }
