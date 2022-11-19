@@ -1,5 +1,5 @@
 name: camera_macos
-description: A new Flutter plugin project.
+description: macOS camera package implementation
 version: 0.0.5
 repository: https://github.com/riccardo-lomazzi/camera_macos
 
