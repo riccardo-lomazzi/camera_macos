@@ -13,8 +13,7 @@ Feel free to fork this repository and improve it!
 
 ## Basic usage
 
-### Minimum supported macOS version ###
-The package supports ```macOS 10.11``` and onwards.
+
 ### How to use ###
 Integrate ```CameraMacOSView``` in your widget tree.
 You can choose a fit method and a ```CameraMacOSMode``` (```picture``` or ```video```).
@@ -41,7 +40,7 @@ CameraMacOSView(
     },
 ),
 ```
-### Take picture ###
+### Take a picture ###
 ```
 CameraMacOSFile? file = await macOSController.takePicture();
 if(file != null) {
@@ -51,7 +50,7 @@ if(file != null) {
 }
 
 ```
-### Record Video ###
+### Record a video ###
 
 ```
 await macOSController.recordVideo(
@@ -73,7 +72,8 @@ if(file != null) {
 
 ```
 ### Notes ###
-If you change the widget ```Key``` or the ```CameraMacOsMode```, the widget will reinitialize.
+- If you change the widget ```Key``` or the ```CameraMacOsMode```, the widget will reinitialize.
+- The package supports ```macOS 10.11``` and onwards.
 
 ### Video settings ###
 
