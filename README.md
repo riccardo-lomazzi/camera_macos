@@ -40,10 +40,9 @@ CameraMacOSView(
         print("camera is destroyed");
     },
 ),
-
-//... other methods ...
-
-// call these methods to take pictures and record videos
+```
+### Take picture ###
+```
 CameraMacOSFile? file = await macOSController.takePicture();
 if(file != null) {
     Uint8List? bytes = file.bytes;
@@ -52,15 +51,12 @@ if(file != null) {
 }
 
 ```
-
-If you change the widget ```Key``` or the ```CameraMacOsMode```, the widget will reinitialize.
-
-### Video settings ###
+### Record Video ###
 
 ```
-await macOSController.startVideoRecording(
+await macOSController.recordVideo(
     url: // get url from packages such as path_provider,
-    maxVideoDuration: 30, // 30 seconds,
+    maxVideoDuration: 30, // 30 seconds
     onVideoRecordingFinished: (CameraMacOSFile? file, CameraMacOSException? exception) {
         // called when maxVideoDuration has been reached
         // do something with the file or catch the exception
@@ -76,7 +72,10 @@ if(file != null) {
 }
 
 ```
+### Notes ###
+If you change the widget ```Key``` or the ```CameraMacOsMode```, the widget will reinitialize.
 
+### Video settings ###
 
 Default videos settings (currently locked) are:
 - ```1980x1080``` resolution
