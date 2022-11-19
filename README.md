@@ -81,8 +81,9 @@ Default videos settings (currently locked) are:
 - ```1980x1080``` resolution
 - ```ac1``` audio
 - ```mp4``` format
+
 You can set a maximum video duration (in seconds) for recording videos. A native timer will fire after time has passed.
-You can also set a file location. Default is in the ```Library/Cache``` directory of the application..
+You can also set a file location. Default is in the ```Library/Cache``` directory of the application.
 
 ### Output ###
 After a video or a picture is taken, a ```CameraMacOSFile``` object is generated, containing the ```bytes``` of the content. If you specify a ```url``` for a video, it will return back also the file location.
