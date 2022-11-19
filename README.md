@@ -1,6 +1,7 @@
-# Camera MacOS
+# Camera macOS
 
-Flutter stub implementation of AVFoundation Camera for MacOS.
+Implementation of AVKit Camera for macOS.
+Does basic things.
 Feel free to fork this repository and improve it!
 
 ## Getting Started
@@ -17,7 +18,7 @@ Feel free to fork this repository and improve it!
 ### How to use ###
 Integrate ```CameraMacOSView``` in your widget tree.
 You can choose a fit method and a ```CameraMacOSMode``` (```picture``` or ```video```).
-When the camera is initialized, a ```CameraMacOSController``` object is created and you can use it to do basic functions such as taking Pictures and recording Videos.
+When the camera is initialized, a ```CameraMacOSController``` object is created and can be used to do basic things such as taking pictures and recording videos.
 
 ```
 final GlobalKey cameraKey = GlobalKey("cameraKey");
@@ -35,9 +36,6 @@ CameraMacOSView(
             this.macOSController = controller;
         });
     },
-    onCameraDestroyed: () {
-        print("camera is destroyed");
-    },
 ),
 ```
 ### Take a picture ###
@@ -45,8 +43,7 @@ CameraMacOSView(
 CameraMacOSFile? file = await macOSController.takePicture();
 if(file != null) {
     Uint8List? bytes = file.bytes;
-    // do something with the file
-    macOSController.destroy(); // remove camera texture
+    // do something with the file...
 }
 
 ```
@@ -66,8 +63,7 @@ CameraMacOSFile? file = await macOSController.stopVideoRecording();
 
 if(file != null) {
     Uint8List? bytes = file.bytes;
-    // do something with the file
-    macOSController.destroy(); // remove camera texture
+    // do something with the file...
 }
 
 ```
