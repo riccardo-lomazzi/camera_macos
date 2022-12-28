@@ -89,6 +89,7 @@ After a video or a picture is taken, a ```CameraMacOSFile``` object is generated
 - The plugin is just a temporary substitutive package for the official Flutter team's ```camera``` package. It will work only on macOS.
 - Focus and orientation change are currently unsupported
 - Video Recording resolution is currently not supported
+- Video Recording from external camera devices is currently unsupported.
 
 ## License
 
