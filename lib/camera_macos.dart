@@ -9,6 +9,7 @@ class CameraMacOSView extends StatefulWidget {
   /// Handles how the widget should fit the screen.
   final BoxFit fit;
 
+  final String? deviceId;
   final CameraMacOSMode cameraMode;
   final Widget Function(Object?)? onCameraLoading;
   final Function(CameraMacOSController) onCameraInizialized;
@@ -16,6 +17,7 @@ class CameraMacOSView extends StatefulWidget {
 
   const CameraMacOSView({
     Key? key,
+    this.deviceId,
     this.fit = BoxFit.contain,
     required this.cameraMode,
     required this.onCameraInizialized,
@@ -36,15 +38,14 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
     super.initState();
     initializeCameraFuture = CameraMacOSPlatform.instance
         .initialize(
+      deviceId: widget.deviceId,
       cameraMacOSMode: widget.cameraMode,
     )
         .then((value) {
       if (value != null) {
         this.arguments = value;
         widget.onCameraInizialized(
-          CameraMacOSController(
-            CameraMacOSPlatform.instance,
-          ),
+          CameraMacOSController(),
         );
       }
       return value;
@@ -106,19 +107,19 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
   void didUpdateWidget(CameraMacOSView oldWidget) {
     super.didUpdateWidget(oldWidget);
     // if camera mode has changed mode, reinitialize the camera
-    if (oldWidget.cameraMode != widget.cameraMode ||
+    if (oldWidget.deviceId != widget.deviceId ||
+        oldWidget.cameraMode != widget.cameraMode ||
         oldWidget.key != widget.key) {
       initializeCameraFuture = CameraMacOSPlatform.instance
           .initialize(
+        deviceId: widget.deviceId,
         cameraMacOSMode: widget.cameraMode,
       )
           .then((value) {
         if (value != null) {
           this.arguments = value;
           widget.onCameraInizialized(
-            CameraMacOSController(
-              CameraMacOSPlatform.instance,
-            ),
+            CameraMacOSController(),
           );
         }
         return value;

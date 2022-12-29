@@ -15,7 +15,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     // The selected camera
     var videoDevice: AVCaptureDevice!
-    var audioDevice: AVCaptureDevice!
     
     // Image to be sent to the texture
     var latestBuffer: CVImageBuffer!
@@ -102,7 +101,15 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 let mediaType: AVMediaType? = .video
                 let devices: [AVCaptureDevice] = AVCaptureDevice.captureDevices(mediaType: mediaType)
                 var devicesList: [Dictionary<String, Any>] = []
-                result(devicesList)
+                for device in devices {
+                    devicesList.append([
+                        "supportedModes" : [0,1],
+                        "deviceId": device.uniqueID
+                    ])
+                }
+                result([
+                    "devices": devicesList,
+                ])
             } else {
                 result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Permission not granted", details: nil).toFlutterResult)
             }
@@ -130,22 +137,26 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     }
                 }
                 var newCameraObject: AVCaptureDevice!
-                var newMicrophoneObject: AVCaptureDevice!
+                var capturedVideoDevices: [AVCaptureDevice] = []
                 
                 if #available(macOS 10.15, *) {
-                    newCameraObject = AVCaptureDevice.captureDevice(deviceTypes: [.builtInWideAngleCamera], mediaType: .video)
-                    newMicrophoneObject = AVCaptureDevice.captureDevice(deviceTypes: [.builtInMicrophone], mediaType: .audio)
+                    capturedVideoDevices = AVCaptureDevice.captureDevices(deviceTypes: [.builtInWideAngleCamera, .externalUnknown], mediaType: .video)
                 } else {
-                    newCameraObject = AVCaptureDevice.captureDevice(mediaType: .video)
-                    newMicrophoneObject = AVCaptureDevice.captureDevice(mediaType: .audio)
+                    capturedVideoDevices = AVCaptureDevice.captureDevices(mediaType: .video)
                 }
                 
-                guard let newCameraObject: AVCaptureDevice = newCameraObject, let newMicrophoneObject: AVCaptureDevice = newMicrophoneObject else {
+                if let deviceId: String = arguments["deviceId"] as? String, !deviceId.isEmpty {
+                    // for now, audio can be obtained only from the same source
+                    newCameraObject = capturedVideoDevices.first(where: { $0.uniqueID == deviceId })
+                } else {
+                    newCameraObject = capturedVideoDevices.first
+                }
+                
+                guard let newCameraObject: AVCaptureDevice = newCameraObject else {
                     result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not find a suitable camera on this device", details: nil).toFlutterResult)
                     return
                 }
                 self.videoDevice = newCameraObject
-                self.audioDevice = newMicrophoneObject
                 do {
                     let focusPoint: CGPoint = .init(x: 0.5, y: 0.5)
                     try newCameraObject.lockForConfiguration()
@@ -430,9 +441,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
         registry.textureFrameAvailable(textureId)
         
-        
-        
-        if isRecording, let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
+        if isRecording, let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
            CMSampleBufferDataIsReady(sampleBuffer) {
             videoOutputQueue.async {
                 if let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, audio.isReadyForMoreMediaData {

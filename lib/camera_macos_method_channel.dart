@@ -22,27 +22,26 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   Map<String, Function?> registeredCallbacks = {};
   String? latestVideoUrl;
 
-  /// Call this method to discover all camera devices. A method type is optional
+  /// Call this method to discover all camera devices.
   @override
-  Future<List<CameraMacOSDevice>> listDevices({
-    CameraMacOSMode? cameraMacOSMode,
-  }) async {
+  Future<List<CameraMacOSDevice>> listDevices() async {
     try {
-      final List<Map<String, dynamic>>? args =
-          await methodChannel.invokeListMethod<Map<String, dynamic>>(
-        'listDevices',
-        {
-          "type": cameraMacOSMode?.index,
-        },
-      );
-      if (args == null) {
+      final Map<String, dynamic>? args =
+          await methodChannel.invokeMapMethod<String, dynamic>('listDevices');
+      if (args == null || args["devices"] == null) {
         throw FlutterError("Invalid args: invalid platform response");
       }
+      List<Map<String, dynamic>> devicesList = List.from(args["devices"] ?? [])
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
       List<CameraMacOSDevice> devices = [];
-      for (Map<String, dynamic> m in args) {
+      for (Map<String, dynamic> m in devicesList) {
         CameraMacOSDevice device = CameraMacOSDevice(
           deviceId: m["deviceId"],
-          supportedModes: m["supportedModes"],
+          supportedModes: List.from(m["supportedModes"] ?? [])
+              .map((e) => e as int)
+              .map((e) => CameraMacOSMode.values[e])
+              .toList(),
         );
         devices.add(device);
       }
@@ -56,7 +55,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   @override
   Future<CameraMacOSArguments?> initialize({
     /// initialize the camera with a device. If null, the macOS default camera is chosen
-    CameraMacOSDevice? device,
+    String? deviceId,
 
     /// Photo or Video
     required CameraMacOSMode cameraMacOSMode,
@@ -66,6 +65,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           await methodChannel.invokeMapMethod<String, dynamic>(
         'initialize',
         {
+          "deviceId": deviceId,
           "type": cameraMacOSMode.index,
         },
       );

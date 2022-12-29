@@ -4,11 +4,9 @@ import 'package:camera_macos/camera_macos_platform_interface.dart';
 import 'package:camera_macos/exceptions.dart';
 
 class CameraMacOSController {
-  CameraMacOSPlatform _platformInstance;
+  CameraMacOSController();
 
-  CameraMacOSController(
-    this._platformInstance,
-  );
+  CameraMacOSPlatform get _platformInstance => CameraMacOSPlatform.instance;
 
   /// Call this method to take a picture.
   Future<CameraMacOSFile?> takePicture() {

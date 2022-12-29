@@ -1,5 +1,6 @@
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
+import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
 import 'package:camera_macos/camera_macos_platform_interface.dart';
@@ -12,12 +13,13 @@ class MockCameraMacOSPlatform
     implements CameraMacOSPlatform {
   @override
   Future<CameraMacOSArguments?> initialize(
-      {required CameraMacOSMode cameraMacOSMode}) {
+      {String? deviceId, required CameraMacOSMode cameraMacOSMode}) {
     throw UnimplementedError();
   }
 
   @override
   Future<bool> startVideoRecording({
+    CameraMacOSDevice? device,
     double? maxVideoDuration,
     String? url,
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
@@ -41,6 +43,13 @@ class MockCameraMacOSPlatform
   @override
   Future<bool> destroy() {
     // TODO: implement destroy
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<CameraMacOSDevice>> listDevices(
+      {CameraMacOSMode? cameraMacOSMode}) {
+    // TODO: implement listDevices
     throw UnimplementedError();
   }
 }
