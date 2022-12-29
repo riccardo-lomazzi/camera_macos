@@ -56,6 +56,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
+        case "listDevices":
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            listDevices(arguments, result)
         case "initialize":
             guard let arguments = call.arguments as? Dictionary<String, Any> else {
                 result(FlutterError(code: "INVALID_ARGS", message: "", details: nil).toMap)
@@ -91,6 +94,19 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             fileUrl = paths[0].appendingPathComponent(UUID().uuidString + ".mp4")
         }
         return fileUrl
+    }
+    
+    func listDevices(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
+        self.requestPermission { granted in
+            if granted {
+                let mediaType: AVMediaType? = .video
+                let devices: [AVCaptureDevice] = AVCaptureDevice.captureDevices(mediaType: mediaType)
+                var devicesList: [Dictionary<String, Any>] = []
+                result(devicesList)
+            } else {
+                result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Permission not granted", details: nil).toFlutterResult)
+            }
+        }
     }
     
     func initCamera(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {

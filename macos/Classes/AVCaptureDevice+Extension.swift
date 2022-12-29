@@ -16,9 +16,21 @@ extension AVCaptureDevice {
         return devices.first
     }
     
+    @available(macOS 10.15, *)
+    public class func captureDevices(deviceTypes: [AVCaptureDevice.DeviceType], mediaType: AVMediaType? = nil) -> [AVCaptureDevice] {
+        let devices = AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: mediaType, position: .unspecified).devices
+        return devices
+    }
+    
     public class func captureDevice(mediaType: AVMediaType) -> AVCaptureDevice? {
         return AVCaptureDevice.devices(for: mediaType).first
     }
     
-    
+    public class func captureDevices(mediaType: AVMediaType? = nil) -> [AVCaptureDevice] {
+        if let mediaType = mediaType {
+            return AVCaptureDevice.devices(for: mediaType)
+        } else {
+            return AVCaptureDevice.devices()
+        }
+    }
 }

@@ -1,5 +1,6 @@
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
+import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/exceptions.dart';
 import 'package:flutter/foundation.dart';
@@ -21,9 +22,43 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   Map<String, Function?> registeredCallbacks = {};
   String? latestVideoUrl;
 
+  /// Call this method to discover all camera devices. A method type is optional
+  @override
+  Future<List<CameraMacOSDevice>> listDevices({
+    CameraMacOSMode? cameraMacOSMode,
+  }) async {
+    try {
+      final List<Map<String, dynamic>>? args =
+          await methodChannel.invokeListMethod<Map<String, dynamic>>(
+        'listDevices',
+        {
+          "type": cameraMacOSMode?.index,
+        },
+      );
+      if (args == null) {
+        throw FlutterError("Invalid args: invalid platform response");
+      }
+      List<CameraMacOSDevice> devices = [];
+      for (Map<String, dynamic> m in args) {
+        CameraMacOSDevice device = CameraMacOSDevice(
+          deviceId: m["deviceId"],
+          supportedModes: m["supportedModes"],
+        );
+        devices.add(device);
+      }
+      return devices;
+    } catch (e) {
+      return Future.error(e);
+    }
+  }
+
   /// Call this method to initialize camera. If you implement the widget in your widget tree, this method is useless.
   @override
   Future<CameraMacOSArguments?> initialize({
+    /// initialize the camera with a device. If null, the macOS default camera is chosen
+    CameraMacOSDevice? device,
+
+    /// Photo or Video
     required CameraMacOSMode cameraMacOSMode,
   }) async {
     try {
@@ -72,6 +107,9 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   /// Call this method to start a video recording.
   @override
   Future<bool> startVideoRecording({
+    /// preferred device
+    CameraMacOSDevice? device,
+
     /// Expressed in seconds
     double? maxVideoDuration,
 
