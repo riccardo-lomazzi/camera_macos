@@ -1,4 +1,4 @@
-import 'package:camera_macos/camera_macos.dart';
+import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
@@ -6,6 +6,8 @@ import 'package:camera_macos/exceptions.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'camera_macos_method_channel.dart';
+
+typedef CameraMacOS = CameraMacOSPlatform;
 
 abstract class CameraMacOSPlatform extends PlatformInterface {
   /// Constructs a CameraMacOSPlatform.
@@ -44,7 +46,6 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
   }
 
   Future<bool> startVideoRecording({
-    CameraMacOSDevice? device,
     double? maxVideoDuration,
     String? url,
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,

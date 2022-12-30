@@ -1,4 +1,4 @@
-import 'package:camera_macos/camera_macos.dart';
+import 'package:camera_macos/camera_macos_view.dart';
 
 class CameraMacOSDevice {
   String deviceId;

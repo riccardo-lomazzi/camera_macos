@@ -1,4 +1,4 @@
-import 'package:camera_macos/camera_macos.dart';
+import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_controller.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_device.dart';
@@ -100,21 +100,27 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                     child: Stack(
                       alignment: Alignment.bottomRight,
                       children: [
-                        CameraMacOSView(
-                          key: cameraKey,
-                          deviceId: selectedDevice,
-                          fit: BoxFit.fill,
-                          cameraMode: CameraMacOSMode.picture,
-                          onCameraInizialized:
-                              (CameraMacOSController controller) {
-                            setState(() {
-                              macOSController = controller;
-                            });
-                          },
-                          onCameraDestroyed: () {
-                            return Text("Camera Destroyed!");
-                          },
-                        ),
+                        selectedDevice != null && selectedDevice!.isNotEmpty
+                            ? CameraMacOSView(
+                                key: cameraKey,
+                                deviceId: selectedDevice,
+                                fit: BoxFit.fill,
+                                cameraMode: CameraMacOSMode.picture,
+                                onCameraInizialized:
+                                    (CameraMacOSController controller) {
+                                  setState(() {
+                                    macOSController = controller;
+                                  });
+                                },
+                                onCameraDestroyed: () {
+                                  return Text("Camera Destroyed!");
+                                },
+                              )
+                            : Expanded(
+                                child: Center(
+                                  child: Text("Tap on List Devices first"),
+                                ),
+                              ),
                         lastImagePreviewData != null
                             ? Container(
                                 decoration: ShapeDecoration(
@@ -157,13 +163,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                     color: Colors.lightBlue,
                     textColor: Colors.white,
                     child: Text("Change camera mode"),
-                    onPressed: () {
-                      setState(() {
-                        cameraMode = cameraMode == CameraMacOSMode.picture
-                            ? CameraMacOSMode.video
-                            : CameraMacOSMode.picture;
-                      });
-                    },
+                    onPressed: changeCameraMode,
                   ),
                   MaterialButton(
                     color: Colors.red,
@@ -178,18 +178,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                         return Text(buttonText);
                       },
                     ),
-                    onPressed: () async {
-                      if (macOSController != null) {
-                        if (macOSController!.isDestroyed) {
-                          setState(() {
-                            cameraKey = GlobalKey();
-                          });
-                        } else {
-                          await macOSController?.destroy();
-                          setState(() {});
-                        }
-                      }
-                    },
+                    onPressed: destroyCamera,
                   ),
                   Visibility(
                     visible: cameraMode == CameraMacOSMode.video,
@@ -199,7 +188,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                         child: TextField(
                           controller: durationController,
                           decoration: InputDecoration(
-                            labelText: "Durata video",
+                            labelText: "Video Length",
                             border: InputBorder.none,
                           ),
                         ),
@@ -210,38 +199,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                     color: Colors.lightBlue,
                     textColor: Colors.white,
                     child: Text(cameraButtonText),
-                    onPressed: () async {
-                      try {
-                        if (macOSController != null) {
-                          switch (cameraMode) {
-                            case CameraMacOSMode.picture:
-                              CameraMacOSFile? imageData =
-                                  await macOSController!.takePicture();
-                              if (imageData != null) {
-                                setState(() {
-                                  lastImagePreviewData = imageData.bytes;
-                                });
-                              }
-                              break;
-                            case CameraMacOSMode.video:
-                              if (macOSController!.isRecording) {
-                                CameraMacOSFile? videoData =
-                                    await macOSController!.stopRecording();
-                                if (videoData != null) {
-                                  setState(() {
-                                    lastRecordedVideoData = videoData.bytes;
-                                  });
-                                }
-                              } else {
-                                startRecording();
-                              }
-                              break;
-                          }
-                        }
-                      } catch (e) {
-                        showErrorMessage(message: e.toString());
-                      }
-                    },
+                    onPressed: onCameraButtonTap,
                   ),
                 ],
               ),
@@ -253,31 +211,93 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   }
 
   Future<void> startRecording() async {
-    String urlPath = await videoFilePath;
-    await macOSController!.recordVideo(
-      maxVideoDuration: durationValue,
-      url: urlPath,
-      onVideoRecordingFinished:
-          (CameraMacOSFile? result, CameraMacOSException? exception) {
-        setState(() {});
-        if (exception != null) {
-          showErrorMessage(message: exception.toString());
-        }
-      },
-    );
-    setState(() {});
+    try {
+      String urlPath = await videoFilePath;
+      await macOSController!.recordVideo(
+        maxVideoDuration: durationValue,
+        url: urlPath,
+        onVideoRecordingFinished:
+            (CameraMacOSFile? result, CameraMacOSException? exception) {
+          setState(() {});
+          if (exception != null) {
+            showErrorMessage(message: exception.toString());
+          }
+        },
+      );
+    } catch (e) {
+      showErrorMessage(message: e.toString());
+    } finally {
+      setState(() {});
+    }
   }
 
   Future<void> listDevices() async {
     try {
       List<CameraMacOSDevice> devices =
-          await CameraMacOSPlatform.instance.listDevices();
+          await CameraMacOS.instance.listDevices();
       setState(() {
         this.devices = devices;
         if (devices.isNotEmpty) {
           selectedDevice = devices.first.deviceId;
         }
       });
+    } catch (e) {
+      showErrorMessage(message: e.toString());
+    }
+  }
+
+  void changeCameraMode() {
+    setState(() {
+      cameraMode = cameraMode == CameraMacOSMode.picture
+          ? CameraMacOSMode.video
+          : CameraMacOSMode.picture;
+    });
+  }
+
+  Future<void> destroyCamera() async {
+    try {
+      if (macOSController != null) {
+        if (macOSController!.isDestroyed) {
+          setState(() {
+            cameraKey = GlobalKey();
+          });
+        } else {
+          await macOSController?.destroy();
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      showErrorMessage(message: e.toString());
+    }
+  }
+
+  Future<void> onCameraButtonTap() async {
+    try {
+      if (macOSController != null) {
+        switch (cameraMode) {
+          case CameraMacOSMode.picture:
+            CameraMacOSFile? imageData = await macOSController!.takePicture();
+            if (imageData != null) {
+              setState(() {
+                lastImagePreviewData = imageData.bytes;
+              });
+            }
+            break;
+          case CameraMacOSMode.video:
+            if (macOSController!.isRecording) {
+              CameraMacOSFile? videoData =
+                  await macOSController!.stopRecording();
+              if (videoData != null) {
+                setState(() {
+                  lastRecordedVideoData = videoData.bytes;
+                });
+              }
+            } else {
+              startRecording();
+            }
+            break;
+        }
+      }
     } catch (e) {
       showErrorMessage(message: e.toString());
     }

@@ -1,4 +1,4 @@
-import 'package:camera_macos/camera_macos.dart';
+import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
@@ -107,9 +107,6 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   /// Call this method to start a video recording.
   @override
   Future<bool> startVideoRecording({
-    /// preferred device
-    CameraMacOSDevice? device,
-
     /// Expressed in seconds
     double? maxVideoDuration,
 
