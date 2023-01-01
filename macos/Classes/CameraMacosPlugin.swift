@@ -197,7 +197,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     }
                     
                     let shouldRecordAudio = arguments["enableAudio"] as? Bool ?? true
-                    
+
                     if shouldRecordAudio, let defaultMicrophone = AVCaptureDevice.default(for: .audio) {
                         let audioInput = try AVCaptureDeviceInput(device: defaultMicrophone)
                         if self.captureSession.canAddInput(audioInput) {
@@ -457,6 +457,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         guard !isDestroyed else {
             return
         }
+        
+        i += 1
         
         latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
         registry.textureFrameAvailable(textureId)
