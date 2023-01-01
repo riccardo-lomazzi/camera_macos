@@ -32,12 +32,14 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
 
   Future<CameraMacOSArguments?> initialize({
     String? deviceId,
+    String? audioDeviceId,
     required CameraMacOSMode cameraMacOSMode,
   }) {
     throw UnimplementedError("");
   }
 
-  Future<List<CameraMacOSDevice>> listDevices() {
+  Future<List<CameraMacOSDevice>> listDevices(
+      {CameraMacOSDeviceType? deviceType}) {
     throw UnimplementedError("");
   }
 

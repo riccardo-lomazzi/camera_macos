@@ -22,8 +22,11 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   Uint8List? lastImagePreviewData;
   Uint8List? lastRecordedVideoData;
   GlobalKey cameraKey = GlobalKey();
-  List<CameraMacOSDevice> devices = [];
-  String? selectedDevice;
+  List<CameraMacOSDevice> videoDevices = [];
+  String? selectedVideoDevice;
+
+  List<CameraMacOSDevice> audioDevices = [];
+  String? selectedAudioDevice;
 
   @override
   void initState() {
@@ -78,32 +81,65 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 children: [
-                  devices.isNotEmpty
-                      ? DropdownButton<String>(
-                          elevation: 3,
-                          isExpanded: true,
-                          value: selectedDevice,
-                          items: devices.map((CameraMacOSDevice device) {
-                            return DropdownMenuItem(
-                              value: device.deviceId,
-                              child: Text(device.deviceId),
-                            );
-                          }).toList(),
-                          onChanged: (String? newDeviceID) {
-                            setState(() {
-                              selectedDevice = newDeviceID;
-                            });
-                          },
+                  videoDevices.isNotEmpty
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Video Devices"),
+                            DropdownButton<String>(
+                              elevation: 3,
+                              isExpanded: true,
+                              value: selectedVideoDevice,
+                              items:
+                                  videoDevices.map((CameraMacOSDevice device) {
+                                return DropdownMenuItem(
+                                  value: device.deviceId,
+                                  child: Text(device.deviceId),
+                                );
+                              }).toList(),
+                              onChanged: (String? newDeviceID) {
+                                setState(() {
+                                  selectedVideoDevice = newDeviceID;
+                                });
+                              },
+                            ),
+                          ],
+                        )
+                      : Container(),
+                  audioDevices.isNotEmpty
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Audio Devices"),
+                            DropdownButton<String>(
+                              elevation: 3,
+                              isExpanded: true,
+                              value: selectedAudioDevice,
+                              items:
+                                  audioDevices.map((CameraMacOSDevice device) {
+                                return DropdownMenuItem(
+                                  value: device.deviceId,
+                                  child: Text(device.deviceId),
+                                );
+                              }).toList(),
+                              onChanged: (String? newDeviceID) {
+                                setState(() {
+                                  selectedAudioDevice = newDeviceID;
+                                });
+                              },
+                            ),
+                          ],
                         )
                       : Container(),
                   Expanded(
                     child: Stack(
                       alignment: Alignment.bottomRight,
                       children: [
-                        selectedDevice != null && selectedDevice!.isNotEmpty
+                        selectedVideoDevice != null &&
+                                selectedVideoDevice!.isNotEmpty
                             ? CameraMacOSView(
                                 key: cameraKey,
-                                deviceId: selectedDevice,
+                                deviceId: selectedVideoDevice,
                                 fit: BoxFit.fill,
                                 cameraMode: CameraMacOSMode.picture,
                                 onCameraInizialized:
@@ -156,8 +192,14 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                   MaterialButton(
                     color: Colors.lightBlue,
                     textColor: Colors.white,
-                    child: Text("List devices"),
-                    onPressed: listDevices,
+                    child: Text("List video devices"),
+                    onPressed: listVideoDevices,
+                  ),
+                  MaterialButton(
+                    color: Colors.lightBlue,
+                    textColor: Colors.white,
+                    child: Text("List audio devices"),
+                    onPressed: listAudioDevices,
                   ),
                   MaterialButton(
                     color: Colors.lightBlue,
@@ -231,14 +273,33 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
     }
   }
 
-  Future<void> listDevices() async {
+  Future<void> listVideoDevices() async {
     try {
-      List<CameraMacOSDevice> devices =
-          await CameraMacOS.instance.listDevices();
+      List<CameraMacOSDevice> videoDevices =
+          await CameraMacOS.instance.listDevices(
+        deviceType: CameraMacOSDeviceType.video,
+      );
       setState(() {
-        this.devices = devices;
-        if (devices.isNotEmpty) {
-          selectedDevice = devices.first.deviceId;
+        this.videoDevices = videoDevices;
+        if (videoDevices.isNotEmpty) {
+          selectedVideoDevice = videoDevices.first.deviceId;
+        }
+      });
+    } catch (e) {
+      showErrorMessage(message: e.toString());
+    }
+  }
+
+  Future<void> listAudioDevices() async {
+    try {
+      List<CameraMacOSDevice> audioDevices =
+          await CameraMacOS.instance.listDevices(
+        deviceType: CameraMacOSDeviceType.audio,
+      );
+      setState(() {
+        this.audioDevices = audioDevices;
+        if (audioDevices.isNotEmpty) {
+          selectedAudioDevice = audioDevices.first.deviceId;
         }
       });
     } catch (e) {

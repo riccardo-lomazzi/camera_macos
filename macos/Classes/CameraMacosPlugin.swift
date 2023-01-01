@@ -98,12 +98,24 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     func listDevices(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
         self.requestPermission { granted in
             if granted {
-                let mediaType: AVMediaType? = .video
+                var mediaType: AVMediaType = .video
+                if let deviceType = arguments["deviceType"] as? Int {
+                    switch(deviceType) {
+                    case 0: // video
+                        mediaType = .video
+                    case 1: // audio
+                        mediaType = .audio
+                    default:
+                        break
+                    }
+                }
                 let devices: [AVCaptureDevice] = AVCaptureDevice.captureDevices(mediaType: mediaType)
                 var devicesList: [Dictionary<String, Any>] = []
                 for device in devices {
                     devicesList.append([
-                        "supportedModes" : [0,1],
+                        "deviceType": mediaType == .video ? 0 : 1,
+                        "deviceName" : device.localizedName,
+                        "manufacturer": device.manufacturer,
                         "deviceId": device.uniqueID
                     ])
                 }

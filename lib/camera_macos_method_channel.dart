@@ -24,10 +24,16 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Call this method to discover all camera devices.
   @override
-  Future<List<CameraMacOSDevice>> listDevices() async {
+  Future<List<CameraMacOSDevice>> listDevices(
+      {CameraMacOSDeviceType? deviceType}) async {
     try {
       final Map<String, dynamic>? args =
-          await methodChannel.invokeMapMethod<String, dynamic>('listDevices');
+          await methodChannel.invokeMapMethod<String, dynamic>(
+        'listDevices',
+        {
+          "deviceType": deviceType?.index,
+        },
+      );
       if (args == null || args["devices"] == null) {
         throw FlutterError("Invalid args: invalid platform response");
       }
@@ -36,13 +42,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           .toList();
       List<CameraMacOSDevice> devices = [];
       for (Map<String, dynamic> m in devicesList) {
-        CameraMacOSDevice device = CameraMacOSDevice(
-          deviceId: m["deviceId"],
-          supportedModes: List.from(m["supportedModes"] ?? [])
-              .map((e) => e as int)
-              .map((e) => CameraMacOSMode.values[e])
-              .toList(),
-        );
+        CameraMacOSDevice device = CameraMacOSDevice.fromMap(m);
         devices.add(device);
       }
       return devices;
@@ -54,8 +54,11 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   /// Call this method to initialize camera. If you implement the widget in your widget tree, this method is useless.
   @override
   Future<CameraMacOSArguments?> initialize({
-    /// initialize the camera with a device. If null, the macOS default camera is chosen
+    /// initialize the camera with a video device. If null, the macOS default camera is chosen
     String? deviceId,
+
+    /// initialize the camera with an audio device. If null, the macOS default microphone is chosen
+    String? audioDeviceId,
 
     /// Photo or Video
     required CameraMacOSMode cameraMacOSMode,

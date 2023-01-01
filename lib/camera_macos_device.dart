@@ -1,11 +1,32 @@
-import 'package:camera_macos/camera_macos_view.dart';
+import 'package:camera_macos/extensions.dart';
 
 class CameraMacOSDevice {
   String deviceId;
-  List<CameraMacOSMode> supportedModes;
+  String? manufacturer;
+  CameraMacOSDeviceType deviceType;
+  String? localizedName;
 
   CameraMacOSDevice({
     required this.deviceId,
-    required this.supportedModes,
+    this.manufacturer,
+    this.deviceType = CameraMacOSDeviceType.unknown,
+    this.localizedName,
   });
+
+  factory CameraMacOSDevice.fromMap(Map<String, dynamic> map) {
+    return CameraMacOSDevice(
+      deviceId: map['deviceId'] ?? '',
+      manufacturer: map['manufacturer'],
+      localizedName: map['localizedName'],
+      deviceType: CameraMacOSDeviceType.values.safeElementAt(
+              map["deviceType"] ?? CameraMacOSDeviceType.unknown.index) ??
+          CameraMacOSDeviceType.unknown,
+    );
+  }
+}
+
+enum CameraMacOSDeviceType {
+  video,
+  audio,
+  unknown,
 }

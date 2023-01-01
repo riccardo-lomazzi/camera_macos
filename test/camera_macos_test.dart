@@ -13,7 +13,9 @@ class MockCameraMacOSPlatform
     implements CameraMacOSPlatform {
   @override
   Future<CameraMacOSArguments?> initialize(
-      {String? deviceId, required CameraMacOSMode cameraMacOSMode}) {
+      {String? deviceId,
+      String? audioDeviceId,
+      required CameraMacOSMode cameraMacOSMode}) {
     throw UnimplementedError();
   }
 
@@ -48,7 +50,7 @@ class MockCameraMacOSPlatform
 
   @override
   Future<List<CameraMacOSDevice>> listDevices(
-      {CameraMacOSMode? cameraMacOSMode}) {
+      {CameraMacOSDeviceType? deviceType}) {
     // TODO: implement listDevices
     throw UnimplementedError();
   }
