@@ -390,7 +390,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         switch(videoWriter.status) {
                         case .completed:
                             guard let videoData = try? Data(contentsOf: videoOutputFileURL), !videoData.isEmpty  else {
-                                result(["error": FlutterError(code: "ASSET_WRITER_FAIL", message: "File is empty", details: nil).toMap])
+                                result(["error": FlutterError(code: "ASSET_WRITER_FAIL", message: "File is empty at url: \(videoOutputFileURL.absoluteURL)", details: nil).toMap])
                                 return
                             }
                             print("Video Recorded And Saved At: \(videoOutputFileURL.absoluteURL)")
@@ -458,18 +458,22 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             return
         }
         
+        let isBufferAudio: Bool = output is AVCaptureAudioDataOutput
+        
         i += 1
         
-        latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
-        registry.textureFrameAvailable(textureId)
+        if !isBufferAudio {
+            latestBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+            registry.textureFrameAvailable(textureId)
+        }
         
         if isRecording, let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
            CMSampleBufferDataIsReady(sampleBuffer) {
             videoOutputQueue.async {
-                if let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .audio), audio.isReadyForMoreMediaData {
+                if isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .audio), audio.isReadyForMoreMediaData {
                     audio.append(sampleBuffer)
                 }
-                if let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .video), camera.isReadyForMoreMediaData {
+                if !isBufferAudio, let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .video), camera.isReadyForMoreMediaData {
                     camera.append(sampleBuffer)
                 }
             }
