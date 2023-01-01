@@ -69,6 +69,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
         'initialize',
         {
           "deviceId": deviceId,
+          "audioDeviceId": audioDeviceId,
           "type": cameraMacOSMode.index,
         },
       );

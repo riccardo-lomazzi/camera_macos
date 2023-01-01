@@ -139,6 +139,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 self.captureSession = AVCaptureSession()
                 self.captureSession.beginConfiguration()
                 var sessionPresetSet: Bool = false
+                var isVideoRecording: Bool = false
                 if let sessionPresetArg = arguments["type"] as? Int {
                     switch(sessionPresetArg) {
                     case 0:
@@ -149,6 +150,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     case 1:
                         if self.captureSession.canSetSessionPreset(.high) {
                             sessionPresetSet = true
+                            isVideoRecording = true
                             self.captureSession.sessionPreset = .high
                         }
                     default:
@@ -174,7 +176,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 }
                 
                 if let deviceId: String = arguments["deviceId"] as? String, !deviceId.isEmpty {
-                    // for now, audio can be obtained only from the same source
                     newCameraObject = capturedVideoDevices.first(where: { $0.uniqueID == deviceId })
                 } else {
                     newCameraObject = capturedVideoDevices.first
@@ -209,14 +210,30 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     }
                     
                     let shouldRecordAudio = arguments["enableAudio"] as? Bool ?? true
-
-                    if shouldRecordAudio, let defaultMicrophone = AVCaptureDevice.default(for: .audio) {
-                        let audioInput = try AVCaptureDeviceInput(device: defaultMicrophone)
-                        if self.captureSession.canAddInput(audioInput) {
-                            self.captureSession.addInput(audioInput)
+                    
+                    if shouldRecordAudio, isVideoRecording {
+                        var capturedAudioDevices: [AVCaptureDevice] = []
+                        
+                        if #available(macOS 10.15, *) {
+                            capturedAudioDevices = AVCaptureDevice.captureDevices(deviceTypes: [.builtInMicrophone, .externalUnknown], mediaType: .audio)
+                        } else {
+                            capturedAudioDevices = AVCaptureDevice.captureDevices(mediaType: .audio)
+                        }
+                        
+                        var micObject: AVCaptureDevice!
+                        if let audioDeviceId: String = arguments["audioDeviceId"] as? String, !audioDeviceId.isEmpty {
+                            micObject = capturedAudioDevices.first(where: { $0.uniqueID == audioDeviceId })
+                        } else {
+                            micObject = AVCaptureDevice.default(for: .audio)
+                        }
+                        if let micObject = micObject {
+                            let audioInput = try AVCaptureDeviceInput(device: micObject)
+                            if self.captureSession.canAddInput(audioInput) {
+                                self.captureSession.addInput(audioInput)
+                            }
                         }
                     }
-                    
+
                     var outputInitialized: Bool = false
                     
                     // Add video buffering output
