@@ -123,7 +123,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 for device in devices {
                     devicesList.append([
                         "deviceType": mediaType == .video ? 0 : 1,
-                        "deviceName" : device.localizedName,
+                        "localizedName" : device.localizedName,
                         "manufacturer": device.manufacturer,
                         "deviceId": device.uniqueID
                     ])
@@ -286,7 +286,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     if let videoDevice = self.videoDevice {
                         devices.append([
                             "deviceType": 0,
-                            "deviceName" : videoDevice.localizedName,
+                            "localizedName" : videoDevice.localizedName,
                             "manufacturer": videoDevice.manufacturer,
                             "deviceId": videoDevice.uniqueID
                         ])
@@ -295,7 +295,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     if let audioDevice = self.audioDevice {
                         devices.append([
                             "deviceType": 1,
-                            "deviceName" : audioDevice.localizedName,
+                            "localizedName" : audioDevice.localizedName,
                             "manufacturer": audioDevice.manufacturer,
                             "deviceId": audioDevice.uniqueID
                         ])
