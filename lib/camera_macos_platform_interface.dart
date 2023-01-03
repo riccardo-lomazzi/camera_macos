@@ -33,6 +33,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
   Future<CameraMacOSArguments?> initialize({
     String? deviceId,
     String? audioDeviceId,
+    bool enableAudio = true,
     required CameraMacOSMode cameraMacOSMode,
   }) {
     throw UnimplementedError("");
@@ -50,6 +51,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
   Future<bool> startVideoRecording({
     double? maxVideoDuration,
     String? url,
+    bool? enableAudio,
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) {
     throw UnimplementedError("");

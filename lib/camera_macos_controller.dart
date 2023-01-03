@@ -21,11 +21,15 @@ class CameraMacOSController {
     /// A URL location to save the video. Default is Library/Cache directory of the application.
     String? url,
 
+    /// Enable audio (this flag overrides the initialization setting)
+    bool? enableAudio,
+
     /// Called only when the video has reached the max duration pointed by maxVideoDuration
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) {
     return _platformInstance.startVideoRecording(
       maxVideoDuration: maxVideoDuration,
+      enableAudio: enableAudio,
       url: url,
       onVideoRecordingFinished: onVideoRecordingFinished,
     );

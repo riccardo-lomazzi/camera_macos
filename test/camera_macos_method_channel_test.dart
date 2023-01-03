@@ -30,7 +30,7 @@ void main() {
     "initialize camera picture",
     () async {
       CameraMacOSArguments? macOSArguments = await platform.initialize(
-        cameraMacOSMode: CameraMacOSMode.picture,
+        cameraMacOSMode: CameraMacOSMode.photo,
       );
       expect(macOSArguments, isNot(null));
       expect(macOSArguments?.textureId, isNot(null));
@@ -56,7 +56,7 @@ void main() {
     "take picture",
     () async {
       CameraMacOSArguments? macOSArguments = await platform.initialize(
-        cameraMacOSMode: CameraMacOSMode.picture,
+        cameraMacOSMode: CameraMacOSMode.photo,
       );
       expect(macOSArguments, isNot(null));
       expect(macOSArguments?.textureId, isNot(null));

@@ -15,6 +15,7 @@ class MockCameraMacOSPlatform
   Future<CameraMacOSArguments?> initialize(
       {String? deviceId,
       String? audioDeviceId,
+      bool enableAudio = true,
       required CameraMacOSMode cameraMacOSMode}) {
     throw UnimplementedError();
   }
@@ -24,6 +25,7 @@ class MockCameraMacOSPlatform
     CameraMacOSDevice? device,
     double? maxVideoDuration,
     String? url,
+    bool? enableAudio,
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) {
     // TODO: implement recordVideo

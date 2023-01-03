@@ -11,6 +11,7 @@ class CameraMacOSView extends StatefulWidget {
 
   final String? deviceId;
   final String? audioDeviceId;
+  final bool enableAudio;
   final CameraMacOSMode cameraMode;
   final Widget Function(Object?)? onCameraLoading;
   final Function(CameraMacOSController) onCameraInizialized;
@@ -20,6 +21,7 @@ class CameraMacOSView extends StatefulWidget {
     Key? key,
     this.deviceId,
     this.audioDeviceId,
+    this.enableAudio = true,
     this.fit = BoxFit.contain,
     required this.cameraMode,
     required this.onCameraInizialized,
@@ -43,6 +45,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
       deviceId: widget.deviceId,
       audioDeviceId: widget.audioDeviceId,
       cameraMacOSMode: widget.cameraMode,
+      enableAudio: widget.enableAudio,
     )
         .then((value) {
       if (value != null) {
@@ -113,12 +116,14 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
     if (oldWidget.deviceId != widget.deviceId ||
         oldWidget.audioDeviceId != widget.audioDeviceId ||
         oldWidget.cameraMode != widget.cameraMode ||
+        oldWidget.enableAudio != widget.enableAudio ||
         oldWidget.key != widget.key) {
       initializeCameraFuture = CameraMacOSPlatform.instance
           .initialize(
         deviceId: widget.deviceId,
         audioDeviceId: widget.audioDeviceId,
         cameraMacOSMode: widget.cameraMode,
+        enableAudio: widget.enableAudio,
       )
           .then((value) {
         if (value != null) {
@@ -139,6 +144,6 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
 }
 
 enum CameraMacOSMode {
-  picture,
+  photo,
   video,
 }

@@ -28,10 +28,12 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   List<CameraMacOSDevice> audioDevices = [];
   String? selectedAudioDevice;
 
+  bool enableAudio = true;
+
   @override
   void initState() {
     super.initState();
-    cameraMode = CameraMacOSMode.picture;
+    cameraMode = CameraMacOSMode.photo;
     durationValue = 15;
     durationController = TextEditingController(text: "$durationValue");
     durationController.addListener(() {
@@ -50,7 +52,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   String get cameraButtonText {
     String label = "Do something";
     switch (cameraMode) {
-      case CameraMacOSMode.picture:
+      case CameraMacOSMode.photo:
         label = "Take Picture";
         break;
       case CameraMacOSMode.video:
@@ -81,56 +83,96 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 children: [
-                  videoDevices.isNotEmpty
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Video Devices"),
-                            DropdownButton<String>(
-                              elevation: 3,
-                              isExpanded: true,
-                              value: selectedVideoDevice,
-                              items:
-                                  videoDevices.map((CameraMacOSDevice device) {
-                                return DropdownMenuItem(
-                                  value: device.deviceId,
-                                  child: Text(device.deviceId),
-                                );
-                              }).toList(),
-                              onChanged: (String? newDeviceID) {
-                                setState(() {
-                                  selectedVideoDevice = newDeviceID;
-                                });
-                              },
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Video Devices",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: DropdownButton<String>(
+                                elevation: 3,
+                                isExpanded: true,
+                                value: selectedVideoDevice,
+                                underline: Container(color: Colors.transparent),
+                                items: videoDevices
+                                    .map((CameraMacOSDevice device) {
+                                  return DropdownMenuItem(
+                                    value: device.deviceId,
+                                    child: Text(device.deviceId),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newDeviceID) {
+                                  setState(() {
+                                    selectedVideoDevice = newDeviceID;
+                                  });
+                                },
+                              ),
                             ),
-                          ],
-                        )
-                      : Container(),
-                  audioDevices.isNotEmpty
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Audio Devices"),
-                            DropdownButton<String>(
-                              elevation: 3,
-                              isExpanded: true,
-                              value: selectedAudioDevice,
-                              items:
-                                  audioDevices.map((CameraMacOSDevice device) {
-                                return DropdownMenuItem(
-                                  value: device.deviceId,
-                                  child: Text(device.deviceId),
-                                );
-                              }).toList(),
-                              onChanged: (String? newDeviceID) {
-                                setState(() {
-                                  selectedAudioDevice = newDeviceID;
-                                });
-                              },
+                          ),
+                          MaterialButton(
+                            color: Colors.lightBlue,
+                            textColor: Colors.white,
+                            child: Text("List video devices"),
+                            onPressed: listVideoDevices,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Divider(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Audio Devices",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: DropdownButton<String>(
+                                elevation: 3,
+                                isExpanded: true,
+                                value: selectedAudioDevice,
+                                underline: Container(color: Colors.transparent),
+                                items: audioDevices
+                                    .map((CameraMacOSDevice device) {
+                                  return DropdownMenuItem(
+                                    value: device.deviceId,
+                                    child: Text(device.deviceId),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newDeviceID) {
+                                  setState(() {
+                                    selectedAudioDevice = newDeviceID;
+                                  });
+                                },
+                              ),
                             ),
-                          ],
-                        )
-                      : Container(),
+                          ),
+                          MaterialButton(
+                            color: Colors.lightBlue,
+                            textColor: Colors.white,
+                            child: Text("List audio devices"),
+                            onPressed: listAudioDevices,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Divider(),
                   Expanded(
                     child: Stack(
                       alignment: Alignment.bottomRight,
@@ -140,8 +182,9 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                             ? CameraMacOSView(
                                 key: cameraKey,
                                 deviceId: selectedVideoDevice,
+                                audioDeviceId: selectedAudioDevice,
                                 fit: BoxFit.fill,
-                                cameraMode: CameraMacOSMode.picture,
+                                cameraMode: CameraMacOSMode.photo,
                                 onCameraInizialized:
                                     (CameraMacOSController controller) {
                                   setState(() {
@@ -152,10 +195,8 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                   return Text("Camera Destroyed!");
                                 },
                               )
-                            : Expanded(
-                                child: Center(
-                                  child: Text("Tap on List Devices first"),
-                                ),
+                            : Center(
+                                child: Text("Tap on List Devices first"),
                               ),
                         lastImagePreviewData != null
                             ? Container(
@@ -182,69 +223,123 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
               ),
             ),
           ),
-          Expanded(
-            flex: 10,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  MaterialButton(
-                    color: Colors.lightBlue,
-                    textColor: Colors.white,
-                    child: Text("List video devices"),
-                    onPressed: listVideoDevices,
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Settings",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
                   ),
-                  MaterialButton(
-                    color: Colors.lightBlue,
-                    textColor: Colors.white,
-                    child: Text("List audio devices"),
-                    onPressed: listAudioDevices,
-                  ),
-                  MaterialButton(
-                    color: Colors.lightBlue,
-                    textColor: Colors.white,
-                    child: Text("Change camera mode"),
-                    onPressed: changeCameraMode,
-                  ),
-                  MaterialButton(
-                    color: Colors.red,
-                    textColor: Colors.white,
-                    child: Builder(
-                      builder: (context) {
-                        String buttonText = "Destroy";
-                        if (macOSController != null &&
-                            macOSController!.isDestroyed) {
-                          buttonText = "Reinitialize";
-                        }
-                        return Text(buttonText);
-                      },
-                    ),
-                    onPressed: destroyCamera,
-                  ),
-                  Visibility(
-                    visible: cameraMode == CameraMacOSMode.video,
-                    child: Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: TextField(
-                          controller: durationController,
-                          decoration: InputDecoration(
-                            labelText: "Video Length",
-                            border: InputBorder.none,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 90,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CheckboxListTile(
+                            value: enableAudio,
+                            contentPadding: EdgeInsets.zero,
+                            tristate: false,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            title: Text("Enable Audio"),
+                            onChanged: (bool? newValue) {
+                              setState(() {
+                                this.enableAudio = newValue ?? false;
+                              });
+                            },
                           ),
-                        ),
+                          Text(
+                            "Camera mode",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          RadioListTile(
+                            title: Text("Photo"),
+                            contentPadding: EdgeInsets.zero,
+                            value: CameraMacOSMode.photo,
+                            groupValue: cameraMode,
+                            onChanged: (CameraMacOSMode? newMode) {
+                              setState(() {
+                                if (newMode != null) {
+                                  this.cameraMode = newMode;
+                                }
+                              });
+                            },
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: RadioListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text("Video"),
+                                  value: CameraMacOSMode.video,
+                                  groupValue: cameraMode,
+                                  onChanged: (CameraMacOSMode? newMode) {
+                                    setState(() {
+                                      if (newMode != null) {
+                                        this.cameraMode = newMode;
+                                      }
+                                    });
+                                  },
+                                ),
+                              ),
+                              Visibility(
+                                visible: cameraMode == CameraMacOSMode.video,
+                                child: Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12.0),
+                                    child: TextField(
+                                      controller: durationController,
+                                      decoration: InputDecoration(
+                                        labelText: "Video Length",
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  MaterialButton(
-                    color: Colors.lightBlue,
-                    textColor: Colors.white,
-                    child: Text(cameraButtonText),
-                    onPressed: onCameraButtonTap,
-                  ),
-                ],
-              ),
+                    Spacer(flex: 10),
+                  ],
+                ),
+                Container(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    MaterialButton(
+                      color: Colors.red,
+                      textColor: Colors.white,
+                      child: Builder(
+                        builder: (context) {
+                          String buttonText = "Destroy";
+                          if (macOSController != null &&
+                              macOSController!.isDestroyed) {
+                            buttonText = "Reinitialize";
+                          }
+                          return Text(buttonText);
+                        },
+                      ),
+                      onPressed: destroyCamera,
+                    ),
+                    MaterialButton(
+                      color: Colors.lightBlue,
+                      textColor: Colors.white,
+                      child: Text(cameraButtonText),
+                      onPressed: onCameraButtonTap,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -258,6 +353,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
       await macOSController!.recordVideo(
         maxVideoDuration: durationValue,
         url: urlPath,
+        enableAudio: enableAudio,
         onVideoRecordingFinished:
             (CameraMacOSFile? result, CameraMacOSException? exception) {
           setState(() {});
@@ -309,9 +405,9 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
 
   void changeCameraMode() {
     setState(() {
-      cameraMode = cameraMode == CameraMacOSMode.picture
+      cameraMode = cameraMode == CameraMacOSMode.photo
           ? CameraMacOSMode.video
-          : CameraMacOSMode.picture;
+          : CameraMacOSMode.photo;
     });
   }
 
@@ -336,7 +432,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
     try {
       if (macOSController != null) {
         switch (cameraMode) {
-          case CameraMacOSMode.picture:
+          case CameraMacOSMode.photo:
             CameraMacOSFile? imageData = await macOSController!.takePicture();
             if (imageData != null) {
               setState(() {

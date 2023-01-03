@@ -62,6 +62,9 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
     /// Photo or Video
     required CameraMacOSMode cameraMacOSMode,
+
+    /// Enable Audio Recording
+    bool enableAudio = true,
   }) async {
     try {
       final Map<String, dynamic>? args =
@@ -71,18 +74,28 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           "deviceId": deviceId,
           "audioDeviceId": audioDeviceId,
           "type": cameraMacOSMode.index,
+          "enableAudio": enableAudio,
         },
       );
       if (args == null) {
         throw FlutterError("Invalid args: invalid platform response");
       }
       isDestroyed = false;
+      List<Map<String, dynamic>> devicesList = List.from(args["devices"] ?? [])
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+      List<CameraMacOSDevice> devices = [];
+      for (Map<String, dynamic> m in devicesList) {
+        CameraMacOSDevice device = CameraMacOSDevice.fromMap(m);
+        devices.add(device);
+      }
       return CameraMacOSArguments(
         textureId: args["textureId"],
         size: Size(
           args["size"]?["width"] ?? 0,
           args["size"]?["height"] ?? 0,
         ),
+        devices: devices,
       );
     } catch (e) {
       return Future.error(e);
@@ -111,8 +124,11 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   /// Call this method to start a video recording.
   @override
   Future<bool> startVideoRecording({
-    /// Expressed in seconds
+    /// Max video duration, expressed in seconds
     double? maxVideoDuration,
+
+    /// Enable audio (this flag overrides the initializion parameter of the same name)
+    bool? enableAudio,
 
     /// A URL location to save the video
     String? url,
@@ -133,6 +149,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
             {
               "maxVideoDuration": maxVideoDuration,
               "url": url,
+              "enableAudio": enableAudio,
             },
           ) as bool? ??
           false;

@@ -16,6 +16,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     // The selected camera
     var videoDevice: AVCaptureDevice!
     
+    // The selected microphone
+    var audioDevice: AVCaptureDevice?
+    
     // Image to be sent to the texture
     var latestBuffer: CVImageBuffer!
     
@@ -25,6 +28,12 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     // Temp variabile to store FlutterResult methods
     var videoOutputFileURL: URL!
     
+    // Enable Audio
+    var enableAudio: Bool = true
+    
+    // Video quality
+    var videoOutputWidth: Int32!
+    var videoOutputHeight: Int32!
     
     // Semaphore variable
     var isTakingPicture: Bool = false
@@ -139,7 +148,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 self.captureSession = AVCaptureSession()
                 self.captureSession.beginConfiguration()
                 var sessionPresetSet: Bool = false
-                var isVideoRecording: Bool = false
                 if let sessionPresetArg = arguments["type"] as? Int {
                     switch(sessionPresetArg) {
                     case 0:
@@ -150,7 +158,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     case 1:
                         if self.captureSession.canSetSessionPreset(.high) {
                             sessionPresetSet = true
-                            isVideoRecording = true
                             self.captureSession.sessionPreset = .high
                         }
                     default:
@@ -210,8 +217,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     }
                     
                     let shouldRecordAudio = arguments["enableAudio"] as? Bool ?? true
+                    self.enableAudio = shouldRecordAudio
                     
-                    if shouldRecordAudio, isVideoRecording {
+                    if shouldRecordAudio {
                         var capturedAudioDevices: [AVCaptureDevice] = []
                         
                         if #available(macOS 10.15, *) {
@@ -230,6 +238,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                             let audioInput = try AVCaptureDeviceInput(device: micObject)
                             if self.captureSession.canAddInput(audioInput) {
                                 self.captureSession.addInput(audioInput)
+                                self.audioDevice = micObject
                             }
                         }
                     }
@@ -248,15 +257,16 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 connection.isVideoMirrored = true
                             }
                         }
-                        
+                        outputInitialized = true
                     }
                     
                     // Add audio buffering output
-                    let audioOutput = AVCaptureAudioDataOutput()
-                    if self.captureSession.canAddOutput(audioOutput) {
-                        audioOutput.setSampleBufferDelegate(self, queue: .main)
-                        self.captureSession.addOutput(audioOutput)
-                        outputInitialized = true
+                    if shouldRecordAudio {
+                        let audioOutput = AVCaptureAudioDataOutput()
+                        if self.captureSession.canAddOutput(audioOutput) {
+                            audioOutput.setSampleBufferDelegate(self, queue: .main)
+                            self.captureSession.addOutput(audioOutput)
+                        }
                     }
                     
                     guard outputInitialized else {
@@ -266,9 +276,32 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     
                     self.captureSession.commitConfiguration()
                     self.captureSession.startRunning()
+                    
                     let dimensions = CMVideoFormatDescriptionGetDimensions(newCameraObject.activeFormat.formatDescription)
+                    self.videoOutputHeight = dimensions.height
+                    self.videoOutputWidth = dimensions.width
                     let size = ["width": Double(dimensions.width), "height": Double(dimensions.height)]
-                    let answer: [String : Any?] = ["textureId": self.textureId, "size": size]
+                    
+                    var devices: [Dictionary<String, Any>] = []
+                    if let videoDevice = self.videoDevice {
+                        devices.append([
+                            "deviceType": 0,
+                            "deviceName" : videoDevice.localizedName,
+                            "manufacturer": videoDevice.manufacturer,
+                            "deviceId": videoDevice.uniqueID
+                        ])
+                    }
+                    
+                    if let audioDevice = self.audioDevice {
+                        devices.append([
+                            "deviceType": 1,
+                            "deviceName" : audioDevice.localizedName,
+                            "manufacturer": audioDevice.manufacturer,
+                            "deviceId": audioDevice.uniqueID
+                        ])
+                    }
+                    
+                    let answer: [String : Any?] = ["textureId": self.textureId, "size": size, "devices": devices]
                     result(answer)
                     
                 } catch(let error) {
@@ -300,8 +333,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     fileUrl = URL(fileURLWithPath: selectedURL)
                 } else {
                     fileUrl = self.generateVideoFileURL(randomGUID: false)
-                    
                 }
+                
+                let shouldRecordAudio = arguments["enableAudio"] as? Bool ?? true
+                
+                self.enableAudio = shouldRecordAudio
                 
                 // Remove old file
                 try? FileManager.default.removeItem(at: fileUrl)
@@ -327,8 +363,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 videoOutputQueue.async {
                     // Add Video Writer Video Input
                     var videoWriterVideoInputSettings: [String : Any] = [
-                        AVVideoWidthKey  : 1280,
-                        AVVideoHeightKey : 720,
+                        AVVideoWidthKey  : self.videoOutputWidth!,
+                        AVVideoHeightKey : self.videoOutputHeight!,
                     ]
                     if #available(macOS 10.13, *) {
                         videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecType.h264
@@ -344,18 +380,20 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     }
 
                     // Add Video Writer Audio Input
-                    let videoWriterAudioInputSettings : [String : Any] = [
-                        AVFormatIDKey : kAudioFormatMPEG4AAC,
-                        AVSampleRateKey : 44100,
-                        AVEncoderBitRateKey : 64000,
-                        AVNumberOfChannelsKey: 1
-                    ]
-                    
-                    let videoWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: videoWriterAudioInputSettings)
-                    videoWriterAudioInput.expectsMediaDataInRealTime = true
-                    if (videoWriter.canAdd(videoWriterAudioInput))
-                    {
-                        videoWriter.add(videoWriterAudioInput)
+                    if self.enableAudio {
+                        let videoWriterAudioInputSettings : [String : Any] = [
+                            AVFormatIDKey : kAudioFormatMPEG4AAC,
+                            AVSampleRateKey : 44100,
+                            AVEncoderBitRateKey : 64000,
+                            AVNumberOfChannelsKey: 1
+                        ]
+                        
+                        let videoWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: videoWriterAudioInputSettings)
+                        videoWriterAudioInput.expectsMediaDataInRealTime = true
+                        if (videoWriter.canAdd(videoWriterAudioInput))
+                        {
+                            videoWriter.add(videoWriterAudioInput)
+                        }
                     }
                     
                     print("Finished Setting up AVAssetWriter")
@@ -400,7 +438,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     func stopRecording(_ result: @escaping FlutterResult) {
-        guard let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = videoWriter, let videoOutputFileURL = self.videoOutputFileURL, let videoWriterVideoInput = videoWriter.inputs.first(where: { $0.mediaType == .video }), let videoWriterAudioInput = videoWriter.inputs.first(where: { $0.mediaType == .audio }), let videoOutputQueue = self.videoOutputQueue else {
+        guard let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = videoWriter, let videoOutputFileURL = self.videoOutputFileURL, let videoWriterVideoInput = videoWriter.inputs.first(where: { $0.mediaType == .video }), let videoOutputQueue = self.videoOutputQueue else {
             result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "AVAssetWriter not found", details: nil).toFlutterResult)
             return
         }
@@ -411,7 +449,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             videoOutputQueue.async {
                 if videoWriter.status == .writing {
                     videoWriterVideoInput.markAsFinished()
-                    videoWriterAudioInput.markAsFinished()
+                    if self.enableAudio, let videoWriterAudioInput = videoWriter.inputs.first(where: { $0.mediaType == .audio }) {
+                        videoWriterAudioInput.markAsFinished()
+                    }
                 }
                 videoWriter.finishWriting {
                     print("Finished AVAssetWriter Writing")
@@ -499,7 +539,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         if isRecording, let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
            CMSampleBufferDataIsReady(sampleBuffer) {
             videoOutputQueue.async {
-                if isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .audio), audio.isReadyForMoreMediaData {
+                if self.enableAudio, isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .audio), audio.isReadyForMoreMediaData {
                     audio.append(sampleBuffer)
                 }
                 if !isBufferAudio, let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .video), camera.isReadyForMoreMediaData {
