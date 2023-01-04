@@ -1,8 +1,7 @@
 # Camera macOS
 
 Implementation of ```AVKit``` camera for ```macOS```.
-Does basic things.
-Feel free to fork this repository and improve it!
+Can take pictures and record videos, even with external cameras.
 
 ## Getting Started
 
