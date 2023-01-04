@@ -20,22 +20,14 @@ Integrate ```CameraMacOSView``` in your widget tree.
 You can choose a ```BoxFit``` method and a ```CameraMacOSMode``` (```picture``` or ```video```).
 When the camera is initialized, a ```CameraMacOSController``` object is created and can be used to do basic things such as taking pictures and recording videos.
 
-It works with external cameras too: specify an optional ```deviceId``` for the camera and an optional ```audioDeviceId``` for the microphone.
-Both IDs are related to the ```uniqueID``` property of ```AVCaptureDevice```, and can be obtained with the ```listDevices``` method.
-Audio recording can be enabled or disabled with the ```enableAudio``` flag both in the initialization phase or the ```recordVideo``` (default ```true```).
-
 ```
 final GlobalKey cameraKey = GlobalKey("cameraKey");
 late CameraMacOSController macOSController;
-String? deviceId;
-String? audioDeviceId;
 
 //... build method ...
 
 CameraMacOSView(
     key: cameraKey,
-    deviceId: deviceId, // optional camera parameter, defaults to the Mac primary camera
-    audioDeviceId: audioDeviceId, // optional microphone parameter, defaults to the Mac primary microphone
     fit: BoxFit.fill,
     cameraMode: CameraMacOSMode.photo,
     onCameraInizialized: (CameraMacOSController controller) {
@@ -45,6 +37,43 @@ CameraMacOSView(
     },
 ),
 ```
+
+It works with external cameras too: specify an optional ```deviceId``` for the camera and an optional ```audioDeviceId``` for the microphone.
+Both IDs are related to the ```uniqueID``` property of ```AVCaptureDevice```, and can be obtained with the ```listDevices``` method.
+Audio recording can be enabled or disabled with the ```enableAudio``` flag both in the initialization phase or the ```recordVideo``` (default ```true```).
+
+```
+String? deviceId;
+String? audioDeviceId;
+
+// List devices
+
+List<CameraMacOSDevice> videoDevices = await CameraMacOS.listDevices({ deviceType: CameraMacOSMode.video });
+List<CameraMacOSDevice> audioDevices = await CameraMacOS.listDevices({ deviceType: CameraMacOSMode.audio });
+
+// Set devices
+deviceId = videoDevices.first.deviceId
+audioDeviceId = audioDevices.first.deviceId
+
+//... build method ...
+
+CameraMacOSView(
+    deviceId: deviceId, // optional camera parameter, defaults to the Mac primary camera
+    audioDeviceId: audioDeviceId, // optional microphone parameter, defaults to the Mac primary microphone
+    fit: BoxFit.fill,
+    cameraMode: CameraMacOSMode.photo,
+    onCameraInizialized: (CameraMacOSController controller) {
+        // ...
+    },
+),
+```
+
+A ```CameraMacOSDevice``` object contains the following properties (mapped to the original ```AVCaptureDevice``` class):
+- ```deviceId```
+- ```localizedName```
+- ```manufacturer```
+- ```deviceType``` (video or audio)
+
 ### Take a picture ###
 ```
 CameraMacOSFile? file = await macOSController.takePicture();
@@ -59,7 +88,7 @@ if(file != null) {
 ```
 await macOSController.recordVideo(
     url: // get url from packages such as path_provider,
-    maxVideoDuration: 30, // 30 seconds,
+    maxVideoDuration: 30, // duration in seconds,
     enableAudio: null, // optional, overrides initialization parameter
     onVideoRecordingFinished: (CameraMacOSFile? file, CameraMacOSException? exception) {
         // called when maxVideoDuration has been reached
@@ -75,23 +104,9 @@ if(file != null) {
 }
 
 ```
-### List Devices ###
 
-Devices can be obtained with the ```listDevices``` method.
-
-```
-List<CameraMacOSDevice> videoDevices = await CameraMacOS.listDevices({deviceType: CameraMacOSDeviceType.video}); // list video devices
-```
-
-A ```CameraMacOSDevice``` contains the following properties:
-- ```deviceId```
-- ```localizedName```
-- ```manufacturer```
-- ```deviceType``` (video or audio)
-
-### Notes ###
+### Widget refreshing ###
 - If you change the widget ```Key```, ```deviceId```  or the ```CameraMacOsMode```, the widget will reinitialize.
-- The package supports ```macOS 10.11``` and onwards.
 
 ### Video settings ###
 
@@ -112,6 +127,7 @@ After a video or a picture is taken, a ```CameraMacOSFile``` object is generated
 
 ## Limitations and notes
 
+- The package supports ```macOS 10.11``` and onwards.
 - The plugin is just a temporary substitutive package for the official Flutter team's ```camera``` package. It will work only on ```macOS```.
 - Focus and orientation change are currently unsupported
 - Video Recording resolution change is currently not supported
