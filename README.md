@@ -38,9 +38,8 @@ CameraMacOSView(
 ),
 ```
 
-It works with external cameras too: specify an optional ```deviceId``` for the camera and an optional ```audioDeviceId``` for the microphone.
+Eventually, the package supports external cameras: you can specify an optional ```deviceId``` for the camera and an optional ```audioDeviceId``` for the microphone.
 Both IDs are related to the ```uniqueID``` property of ```AVCaptureDevice```, and can be obtained with the ```listDevices``` method.
-Audio recording can be enabled or disabled with the ```enableAudio``` flag both in the initialization phase or within the ```recordVideo``` method (default ```true```).
 
 ```
 String? deviceId;
@@ -60,7 +59,6 @@ audioDeviceId = audioDevices.first.deviceId
 CameraMacOSView(
     deviceId: deviceId, // optional camera parameter, defaults to the Mac primary camera
     audioDeviceId: audioDeviceId, // optional microphone parameter, defaults to the Mac primary microphone
-    enableAudio: true,
     cameraMode: CameraMacOSMode.video,
     onCameraInizialized: (CameraMacOSController controller) {
         // ...
@@ -105,6 +103,9 @@ if(file != null) {
 
 ```
 
+Audio recording can be enabled or disabled with the ```enableAudio``` flag both in the camera initialization phase or within the ```recordVideo``` method (default ```true```).
+
+
 ### Widget refreshing ###
 - If you change the widget ```Key```, ```deviceId```  or the ```CameraMacOsMode```, the widget will reinitialize.
 
@@ -118,7 +119,7 @@ Default videos settings (currently locked) are:
 - default video format (```mp4```)
 
 You can set a maximum video duration (in seconds) for recording videos with ```maxVideoDuration```.
-A native timer will fire after time has passed.
+A native timer will fire after time has passed, and will call the ```onVideoRecordingFinished``` method.
 
 You can also set a file location. Default is in the ```Library/Cache``` directory of the application.
 

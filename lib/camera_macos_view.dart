@@ -51,7 +51,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
       if (value != null) {
         this.arguments = value;
         widget.onCameraInizialized(
-          CameraMacOSController(),
+          CameraMacOSController(value),
         );
       }
       return value;
@@ -129,7 +129,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         if (value != null) {
           this.arguments = value;
           widget.onCameraInizialized(
-            CameraMacOSController(),
+            CameraMacOSController(value),
           );
         }
         return value;
