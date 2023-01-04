@@ -1,3 +1,5 @@
+## 0.0.6+1
+* Updated README
 ## 0.0.6
 * Added support for external cameras (see Readme for info about ```listDevices``` method)
 * Various recording crashes fixes
