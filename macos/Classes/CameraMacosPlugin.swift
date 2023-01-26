@@ -510,7 +510,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             self.captureSession.removeOutput(output)
         }
         
-        self.registry.unregisterTexture(self.textureId)
+        if let textureId = self.textureId {
+            self.registry.unregisterTexture(textureId)
+        }
         
         self.latestBuffer = nil
         self.captureSession = nil
