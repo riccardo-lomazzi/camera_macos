@@ -81,6 +81,10 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
           }
         }
 
+        if (snapshot.data != null && snapshot.data!.textureId == null) {
+          return Container();
+        }
+
         if (CameraMacOSPlatform.instance is MethodChannelCameraMacOS &&
             (CameraMacOSPlatform.instance as MethodChannelCameraMacOS)
                 .isDestroyed) {

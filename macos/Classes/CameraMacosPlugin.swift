@@ -523,7 +523,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-        guard !isDestroyed else {
+        guard !isDestroyed, textureId != nil else {
             return
         }
         
