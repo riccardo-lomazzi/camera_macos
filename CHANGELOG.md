@@ -1,3 +1,5 @@
+## 0.0.6+2
+* Small fix for handling ```nil``` ```textureId``` values.
 ## 0.0.6+1
 * Updated README
 ## 0.0.6
