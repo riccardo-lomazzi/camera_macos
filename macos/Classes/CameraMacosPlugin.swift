@@ -327,6 +327,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         do {
             if(!isRecording) {
                 
+                let shouldRecordAudio = arguments["enableAudio"] as? Bool ?? true
+                
+                self.enableAudio = shouldRecordAudio
+                
+                // Remove old file
                 var fileUrl: URL!
                 
                 if let selectedURL = arguments["url"] as? String, !selectedURL.isEmpty {
@@ -335,13 +340,17 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     fileUrl = self.generateVideoFileURL(randomGUID: false)
                 }
                 
-                let shouldRecordAudio = arguments["enableAudio"] as? Bool ?? true
-                
-                self.enableAudio = shouldRecordAudio
-                
-                // Remove old file
                 try? FileManager.default.removeItem(at: fileUrl)
+                
+                let folderURL = fileUrl.deletingLastPathComponent()
+                
+                var isDirectory: ObjCBool = false
+                if FileManager.default.fileExists(atPath: folderURL.path, isDirectory: &isDirectory), isDirectory.boolValue {
+                    try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+                }
+
                 self.videoOutputFileURL = fileUrl
+                
                 
                 self.videoWriter = try AVAssetWriter(outputURL: fileUrl, fileType: .mp4)
                 print("Setting up AVAssetWriter")
@@ -407,7 +416,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         }
                     }
                     
-                    #warning("Sto modificando gli output sul bufferdelegate")
                     // video buffering output
                     if let videoOutput = self.captureSession.outputs.first(where: { $0 is AVCaptureVideoDataOutput }) as? AVCaptureVideoDataOutput {
                         videoOutput.setSampleBufferDelegate(self, queue: videoOutputQueue)
@@ -419,8 +427,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                             audioOutput.setSampleBufferDelegate(self, queue: videoOutputQueue)
                         }
                     }
-                    
-
                     
                     print("Finished Setting up AVAssetWriter")
                     
@@ -576,40 +582,13 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
            CMSampleBufferDataIsReady(sampleBuffer) {
             videoOutputQueue.async {
                 if self.enableAudio, isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .audio), audio.isReadyForMoreMediaData {
-                    do {
-                        let result = try audio.append(sampleBuffer)
-                        print("Written audio buffer: \(result)")
-                    } catch(let err) {
-                        print("Writing Audio buffer Error" + err.localizedDescription)
-                    }
-                    
+                    audio.append(sampleBuffer)
                 }
                 if !isBufferAudio, let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .video), camera.isReadyForMoreMediaData {
                     self.latestFrameWrittenTimeStamp = time
-                    do {
-                        let result = try camera.append(sampleBuffer)
-                        print("Written video buffer: \(result)")
-                    } catch(let err) {
-                        print("Writing video buffer Error" + err.localizedDescription)
-                    }
+                    camera.append(sampleBuffer)
                 }
             }
-//
-//            if ![.failed, .cancelled, .unknown].contains(videoWriter.status), !isBufferAudio, let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .video) {
-//                camera.requestMediaDataWhenReady(on: videoOutputQueue) {
-//                    while(camera.isReadyForMoreMediaData) {
-//                        camera.append(sampleBuffer)
-//                    }
-//                }
-//            }
-//
-//            if ![.failed, .cancelled, .unknown].contains(videoWriter.status), self.enableAudio, isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .audio) {
-//                audio.requestMediaDataWhenReady(on: videoOutputQueue) {
-//                    while(audio.isReadyForMoreMediaData) {
-//                        audio.append(sampleBuffer)
-//                    }
-//                }
-//            }
             
         }
         
