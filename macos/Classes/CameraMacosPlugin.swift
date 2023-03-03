@@ -352,6 +352,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 }
                 
                 videoWriter.shouldOptimizeForNetworkUse = true
+                let settingsAssistant = AVOutputSettingsAssistant(preset: .preset1280x720)
                 
                 videoOutputQueue = DispatchQueue(label: "videoQueue", qos: .utility, attributes: .concurrent, autoreleaseFrequency: DispatchQueue.AutoreleaseFrequency.inherit, target: DispatchQueue.global())
                 guard let videoOutputQueue = videoOutputQueue else {
@@ -366,11 +367,17 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         AVVideoWidthKey  : self.videoOutputWidth!,
                         AVVideoHeightKey : self.videoOutputHeight!,
                     ]
+                    
                     if #available(macOS 10.13, *) {
                         videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecType.h264
                     } else {
                         videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecH264
                     }
+                    
+                    if let settingsAssistant = settingsAssistant, let videoSettings = settingsAssistant.videoSettings, videoWriter.canApply(outputSettings: videoSettings, forMediaType: .video) {
+                        videoWriterVideoInputSettings = videoSettings
+                    }
+
                     
                     let videoWriterVideoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoWriterVideoInputSettings)
                     videoWriterVideoInput.expectsMediaDataInRealTime = true
@@ -381,12 +388,16 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
 
                     // Add Video Writer Audio Input
                     if self.enableAudio {
-                        let videoWriterAudioInputSettings : [String : Any] = [
+                        var videoWriterAudioInputSettings : [String : Any] = [
                             AVFormatIDKey : kAudioFormatMPEG4AAC,
                             AVSampleRateKey : 44100,
                             AVEncoderBitRateKey : 64000,
                             AVNumberOfChannelsKey: 1
                         ]
+                        
+                        if let settingsAssistant = settingsAssistant, let audioSettings = settingsAssistant.audioSettings, videoWriter.canApply(outputSettings: audioSettings, forMediaType: .audio) {
+                            videoWriterAudioInputSettings = audioSettings
+                        }
                         
                         let videoWriterAudioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: videoWriterAudioInputSettings)
                         videoWriterAudioInput.expectsMediaDataInRealTime = true
@@ -396,12 +407,28 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         }
                     }
                     
+                    #warning("Sto modificando gli output sul bufferdelegate")
+                    // video buffering output
+                    if let videoOutput = self.captureSession.outputs.first(where: { $0 is AVCaptureVideoDataOutput }) as? AVCaptureVideoDataOutput {
+                        videoOutput.setSampleBufferDelegate(self, queue: videoOutputQueue)
+                    }
+                    
+                    // audio buffering output
+                    if shouldRecordAudio {
+                        if let audioOutput = self.captureSession.outputs.first(where: { $0 is AVCaptureAudioDataOutput }) as? AVCaptureAudioDataOutput {
+                            audioOutput.setSampleBufferDelegate(self, queue: videoOutputQueue)
+                        }
+                    }
+                    
+
+                    
                     print("Finished Setting up AVAssetWriter")
                     
-                    self.isRecording = true
+                    
                     print("Starting AVAssetWriter Writing")
                     if videoWriter.startWriting() {
                         print("Started AVAssetWriter Writing")
+                        self.isRecording = true
                         videoWriter.startSession(atSourceTime: CMTimeMakeWithSeconds(CACurrentMediaTime(), preferredTimescale: 240))
                         DispatchQueue.main.async {
                             if let maxVideoDuration = arguments["maxVideoDuration"] as? Double, maxVideoDuration > 0 {
@@ -452,6 +479,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     if self.enableAudio, let videoWriterAudioInput = videoWriter.inputs.first(where: { $0.mediaType == .audio }) {
                         videoWriterAudioInput.markAsFinished()
                     }
+                }
+                if let latestFrameWrittenTimeStamp = self.latestFrameWrittenTimeStamp {
+                    videoWriter.endSession(atSourceTime: latestFrameWrittenTimeStamp)
                 }
                 videoWriter.finishWriting {
                     print("Finished AVAssetWriter Writing")
@@ -523,6 +553,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         
     }
     
+    private var latestFrameWrittenTimeStamp: CMTime!
+    
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
         guard !isDestroyed, textureId != nil else {
@@ -538,16 +570,47 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             registry.textureFrameAvailable(textureId)
         }
         
+        let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        
         if isRecording, let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
            CMSampleBufferDataIsReady(sampleBuffer) {
             videoOutputQueue.async {
-                if self.enableAudio, isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .audio), audio.isReadyForMoreMediaData {
-                    audio.append(sampleBuffer)
+                if self.enableAudio, isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .audio), audio.isReadyForMoreMediaData {
+                    do {
+                        let result = try audio.append(sampleBuffer)
+                        print("Written audio buffer: \(result)")
+                    } catch(let err) {
+                        print("Writing Audio buffer Error" + err.localizedDescription)
+                    }
+                    
                 }
-                if !isBufferAudio, let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOuput = connection.output, let _ = connectionOuput.connection(with: .video), camera.isReadyForMoreMediaData {
-                    camera.append(sampleBuffer)
+                if !isBufferAudio, let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .video), camera.isReadyForMoreMediaData {
+                    self.latestFrameWrittenTimeStamp = time
+                    do {
+                        let result = try camera.append(sampleBuffer)
+                        print("Written video buffer: \(result)")
+                    } catch(let err) {
+                        print("Writing video buffer Error" + err.localizedDescription)
+                    }
                 }
             }
+//
+//            if ![.failed, .cancelled, .unknown].contains(videoWriter.status), !isBufferAudio, let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .video) {
+//                camera.requestMediaDataWhenReady(on: videoOutputQueue) {
+//                    while(camera.isReadyForMoreMediaData) {
+//                        camera.append(sampleBuffer)
+//                    }
+//                }
+//            }
+//
+//            if ![.failed, .cancelled, .unknown].contains(videoWriter.status), self.enableAudio, isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .audio) {
+//                audio.requestMediaDataWhenReady(on: videoOutputQueue) {
+//                    while(audio.isReadyForMoreMediaData) {
+//                        audio.append(sampleBuffer)
+//                    }
+//                }
+//            }
+            
         }
         
         
