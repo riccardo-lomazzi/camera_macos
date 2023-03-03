@@ -144,17 +144,24 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
         methodChannel.setMethodCallHandler(_genericMethodCallHandler);
         methodCallHandlerSet = true;
       }
-      final result = await methodChannel.invokeMethod(
-            'startRecording',
-            {
-              "maxVideoDuration": maxVideoDuration,
-              "url": url,
-              "enableAudio": enableAudio,
-            },
-          ) as bool? ??
-          false;
-      isRecording = result;
-      return result;
+      final Map<String, dynamic>? result =
+          await methodChannel.invokeMapMethod<String, dynamic>(
+        'startRecording',
+        {
+          "maxVideoDuration": maxVideoDuration,
+          "url": url,
+          "enableAudio": enableAudio,
+        },
+      );
+      if (result == null) {
+        throw FlutterError("Invalid result");
+      }
+      if (result["error"] != null) {
+        throw result["error"];
+      } else {
+        isRecording = true;
+        return isRecording;
+      }
     } catch (e) {
       isRecording = false;
       return Future.error(e);
