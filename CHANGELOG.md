@@ -1,3 +1,6 @@
+## 0.0.6+3
+* Fixed a concurrency bug that could prevent the AVAssetWriter session to start
+* Fixed a bug that could prevent the video from being created in the destination folder
 ## 0.0.6+2
 * Small fix for handling ```nil``` ```textureId``` values.
 ## 0.0.6+1
