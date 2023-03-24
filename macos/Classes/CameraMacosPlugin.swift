@@ -322,6 +322,32 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         result(["imageData": imageData, "error": nil])
     }
     
+    func imageFromSampleBuffer(imageBuffer: CVPixelBuffer) -> NSImage? {
+        
+        CVPixelBufferLockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        
+        guard let baseAddress: UnsafeMutableRawPointer = CVPixelBufferGetBaseAddress(imageBuffer) else {
+            return nil
+        }
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer)
+        let width = CVPixelBufferGetWidth(imageBuffer)
+        let height = CVPixelBufferGetHeight(imageBuffer)
+        
+        let colorSpace = CGColorSpaceCreateDeviceRGB();
+        
+        // Create a bitmap graphics context with the sample buffer data
+        guard let context = CGContext(data: baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue), let quartzImage = context.makeImage() else {
+            return nil
+        }
+        
+        CVPixelBufferUnlockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        
+        // Create an image object from the Quartz image
+        let image = NSImage(cgImage:quartzImage, size: NSSize(width: width, height: height));
+        
+        return (image);
+    }
+    
     func startRecording(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
         // Set up the AVAssetWriter (to write to file)
         do {
@@ -345,7 +371,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 let folderURL = fileUrl.deletingLastPathComponent()
                 
                 var isDirectory: ObjCBool = false
-                if FileManager.default.fileExists(atPath: folderURL.path, isDirectory: &isDirectory), isDirectory.boolValue {
+                if !FileManager.default.fileExists(atPath: folderURL.path, isDirectory: &isDirectory), isDirectory.boolValue {
                     try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
                 }
 
@@ -435,12 +461,12 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     if videoWriter.startWriting() {
                         print("Started AVAssetWriter Writing")
                         self.isRecording = true
-                        videoWriter.startSession(atSourceTime: CMTimeMakeWithSeconds(CACurrentMediaTime(), preferredTimescale: 240))
+                        videoWriter.startSession(atSourceTime: CMTime(seconds: CACurrentMediaTime(), preferredTimescale: CMTimeScale(NSEC_PER_SEC)) /*CMTimeMakeWithSeconds(CACurrentMediaTime(), preferredTimescale: 240)*/)
                         DispatchQueue.main.async {
                             if let maxVideoDuration = arguments["maxVideoDuration"] as? Double, maxVideoDuration > 0 {
                                 if #available(macOS 10.12, *) {
                                     Timer.scheduledTimer(withTimeInterval: maxVideoDuration, repeats: false) { timer in
-                                        if self.isRecording {
+                                        if self.isRecording && videoWriter.status == .writing {
                                             self.stopRecording { callbackResult in
                                                 if let outputChannel = self.outputChannel {
                                                     outputChannel.invokeMethod("onVideoRecordingFinished", arguments: callbackResult)
@@ -471,7 +497,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     func stopRecording(_ result: @escaping FlutterResult) {
-        guard let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = videoWriter, let videoOutputFileURL = self.videoOutputFileURL, let videoWriterVideoInput = videoWriter.inputs.first(where: { $0.mediaType == .video }), let videoOutputQueue = self.videoOutputQueue else {
+        guard let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = videoWriter, let videoOutputFileURL = self.videoOutputFileURL, let videoWriterVideoInput = videoWriter.inputs.first(where: { $0.mediaType == .video }), let videoOutputQueue: DispatchQueue = self.videoOutputQueue else {
             result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "AVAssetWriter not found", details: nil).toFlutterResult)
             return
         }
@@ -486,24 +512,25 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         videoWriterAudioInput.markAsFinished()
                     }
                 }
-                if let latestFrameWrittenTimeStamp = self.latestFrameWrittenTimeStamp {
+                if let latestFrameWrittenTimeStamp = self.latestVideoFrameWrittenTimeStamp {
                     videoWriter.endSession(atSourceTime: latestFrameWrittenTimeStamp)
                 }
                 videoWriter.finishWriting {
-                    print("Finished AVAssetWriter Writing")
+                    let videoWriterStatus: AVAssetWriter.Status = videoWriter.status
+                    print("Finished AVAssetWriter Writing with status: \(videoWriterStatus)")
                     DispatchQueue.main.async {
-                        switch(videoWriter.status) {
+                        switch(videoWriterStatus) {
                         case .completed:
-                            guard let videoData = try? Data(contentsOf: videoOutputFileURL), !videoData.isEmpty  else {
+                            guard let videoData = try? Data(contentsOf: videoOutputFileURL), !videoData.isEmpty else {
                                 result(["error": FlutterError(code: "ASSET_WRITER_FAIL", message: "File is empty at url: \(videoOutputFileURL.absoluteURL)", details: nil).toFlutterResult])
                                 return
                             }
                             print("Video Recorded And Saved At: \(videoOutputFileURL.absoluteURL)")
-                            result(["videoData": videoData, "error": nil])
-                            self.videoWriter = nil
+                            result(["videoData": videoData, "url": videoOutputFileURL.absoluteURL.path, "error": nil])
                         default:
-                            result(FlutterError(code: "ASSET_WRITER_FAIL", message: "File not saved - \(videoWriter.error?.localizedDescription ?? "")", details: nil).toFlutterResult)
+                            result(FlutterError(code: "ASSET_WRITER_FAIL", message: "File not saved at \(videoOutputFileURL.absoluteURL.path) - \(videoWriter.error?.localizedDescription ?? "")", details: nil).toFlutterResult)
                         }
+                        self.videoWriter = nil
                     }
                 }
             }
@@ -559,7 +586,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         
     }
     
-    private var latestFrameWrittenTimeStamp: CMTime!
+    private var latestVideoFrameWrittenTimeStamp: CMTime!
+    private var latestAudioFrameWrittenTimeStamp: CMTime!
     
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
@@ -576,17 +604,34 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             registry.textureFrameAvailable(textureId)
         }
         
-        let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-        
         if isRecording, let captureSession = self.captureSession, captureSession.isRunning, let videoWriter = self.videoWriter, let videoOutputQueue = videoOutputQueue,
            CMSampleBufferDataIsReady(sampleBuffer) {
             videoOutputQueue.async {
+                let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                
                 if self.enableAudio, isBufferAudio, let audio = videoWriter.inputs.first(where: { $0.mediaType == .audio }), !connection.audioChannels.isEmpty, let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .audio), audio.isReadyForMoreMediaData {
-                    audio.append(sampleBuffer)
+                    if let latestAudioFrameWrittenTimeStamp = self.latestAudioFrameWrittenTimeStamp, latestAudioFrameWrittenTimeStamp > time {
+                        print("Wrong frame order: Previous: \(latestAudioFrameWrittenTimeStamp) - Current: \(time)")
+                        return
+                    }
+                    let result: Bool = audio.append(sampleBuffer)
+                    if(!result && videoWriter.status == .failed) {
+                        print("Failed to write audio input: AVAssetWriter Error - " + videoWriter.error.debugDescription + " - Frame Order: " + "Previous: \(self.latestAudioFrameWrittenTimeStamp) - Current: \(time)")
+                    } else if result {
+                        self.latestAudioFrameWrittenTimeStamp = time
+                    }
                 }
                 if !isBufferAudio, let camera = videoWriter.inputs.first(where: { $0.mediaType == .video }), let connectionOutput = connection.output, let _ = connectionOutput.connection(with: .video), camera.isReadyForMoreMediaData {
-                    self.latestFrameWrittenTimeStamp = time
-                    camera.append(sampleBuffer)
+                    if let latestVideoFrameWrittenTimeStamp = self.latestVideoFrameWrittenTimeStamp, latestVideoFrameWrittenTimeStamp > time {
+                        print("Wrong frame order: Previous: \(latestVideoFrameWrittenTimeStamp) - Current: \(time)")
+                        return
+                    }
+                    let result: Bool = camera.append(sampleBuffer)
+                    if !result && videoWriter.status == .failed {
+                        print("Failed to write video input: AVAssetWriter Error - " + videoWriter.error.debugDescription + " - Frame Order: " + "Previous: \(self.latestVideoFrameWrittenTimeStamp) - Current: \(time)")
+                    } else if result {
+                        self.latestVideoFrameWrittenTimeStamp = time
+                    }
                 }
             }
             
@@ -601,30 +646,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         }
     }
     
-    func imageFromSampleBuffer(imageBuffer: CVPixelBuffer) -> NSImage? {
-        
-        CVPixelBufferLockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
-        
-        guard let baseAddress: UnsafeMutableRawPointer = CVPixelBufferGetBaseAddress(imageBuffer) else {
-            return nil
-        }
-        let bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer)
-        let width = CVPixelBufferGetWidth(imageBuffer)
-        let height = CVPixelBufferGetHeight(imageBuffer)
-        
-        let colorSpace = CGColorSpaceCreateDeviceRGB();
-        
-        // Create a bitmap graphics context with the sample buffer data
-        guard let context = CGContext(data: baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue), let quartzImage = context.makeImage() else {
-            return nil
-        }
-        
-        CVPixelBufferUnlockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
-        
-        // Create an image object from the Quartz image
-        let image = NSImage(cgImage:quartzImage, size: NSSize(width: width, height: height));
-        
-        return (image);
-    }
+    
     
 }

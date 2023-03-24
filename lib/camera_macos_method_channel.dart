@@ -20,7 +20,6 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   bool isDestroyed = false;
 
   Map<String, Function?> registeredCallbacks = {};
-  String? latestVideoUrl;
 
   /// Call this method to discover all camera devices.
   @override
@@ -137,7 +136,6 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) async {
     try {
-      this.latestVideoUrl = url;
       registeredCallbacks["onVideoRecordingFinished"] =
           onVideoRecordingFinished;
       if (!methodCallHandlerSet) {
@@ -183,6 +181,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
         isRecording = false;
         return CameraMacOSFile(
           bytes: result["videoData"] as Uint8List?,
+          url: result["url"] as String?,
         );
       }
     } catch (e) {
@@ -217,8 +216,8 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
               exception = CameraMacOSException.fromMap(args["error"]);
             }
             result = CameraMacOSFile(
-              url: latestVideoUrl,
               bytes: args["videoData"] as Uint8List?,
+              url: args["url"] as String?,
             );
           }
           registeredCallbacks["onVideoRecordingFinished"]!(result, exception);

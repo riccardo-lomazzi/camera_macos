@@ -1,3 +1,5 @@
+## 0.0.6+4
+* * Fixed a concurrency bug that could randomly prevent the AVAssetWriter from writing into the buffer and fail the recording
 ## 0.0.6+3
 * Fixed a concurrency bug that could prevent the AVAssetWriter session to start
 * Fixed a bug that could prevent the video from being created in the destination folder

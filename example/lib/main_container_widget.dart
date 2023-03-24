@@ -358,12 +358,12 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
             (CameraMacOSFile? result, CameraMacOSException? exception) {
           setState(() {});
           if (exception != null) {
-            showErrorMessage(message: exception.toString());
+            showAlert(message: exception.toString());
           }
         },
       );
     } catch (e) {
-      showErrorMessage(message: e.toString());
+      showAlert(message: e.toString());
     } finally {
       setState(() {});
     }
@@ -382,7 +382,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         }
       });
     } catch (e) {
-      showErrorMessage(message: e.toString());
+      showAlert(message: e.toString());
     }
   }
 
@@ -399,7 +399,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         }
       });
     } catch (e) {
-      showErrorMessage(message: e.toString());
+      showAlert(message: e.toString());
     }
   }
 
@@ -424,7 +424,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         }
       }
     } catch (e) {
-      showErrorMessage(message: e.toString());
+      showAlert(message: e.toString());
     }
   }
 
@@ -438,6 +438,10 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
               setState(() {
                 lastImagePreviewData = imageData.bytes;
               });
+              showAlert(
+                title: "SUCCESS",
+                message: "Image successfully created",
+              );
             }
             break;
           case CameraMacOSMode.video:
@@ -448,6 +452,10 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                 setState(() {
                   lastRecordedVideoData = videoData.bytes;
                 });
+                showAlert(
+                  title: "SUCCESS",
+                  message: "Video saved at ${videoData.url}",
+                );
               }
             } else {
               startRecording();
@@ -456,17 +464,19 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         }
       }
     } catch (e) {
-      showErrorMessage(message: e.toString());
+      showAlert(message: e.toString());
     }
   }
 
-  Future<void> showErrorMessage({
+  Future<void> showAlert({
+    String title = "ERROR",
     String message = "",
   }) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          title: Text(title),
           content: Text(message),
           actions: [
             TextButton(
