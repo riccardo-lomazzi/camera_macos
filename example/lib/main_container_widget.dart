@@ -29,6 +29,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   String? selectedAudioDevice;
 
   bool enableAudio = true;
+  bool usePlatformView = false;
 
   @override
   void initState() {
@@ -194,6 +195,8 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                 onCameraDestroyed: () {
                                   return Text("Camera Destroyed!");
                                 },
+                                enableAudio: enableAudio,
+                                usePlatformView: usePlatformView,
                               )
                             : Center(
                                 child: Text("Tap on List Devices first"),
@@ -250,6 +253,18 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                             onChanged: (bool? newValue) {
                               setState(() {
                                 this.enableAudio = newValue ?? false;
+                              });
+                            },
+                          ),
+                          CheckboxListTile(
+                            value: usePlatformView,
+                            contentPadding: EdgeInsets.zero,
+                            tristate: false,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            title: Text("Use Platform View"),
+                            onChanged: (bool? newValue) {
+                              setState(() {
+                                this.usePlatformView = newValue ?? false;
                               });
                             },
                           ),
@@ -359,6 +374,11 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
           setState(() {});
           if (exception != null) {
             showAlert(message: exception.toString());
+          } else if (result != null) {
+            showAlert(
+              title: "SUCCESS",
+              message: "Video saved at ${result.url}",
+            );
           }
         },
       );

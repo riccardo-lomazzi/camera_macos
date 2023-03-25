@@ -211,7 +211,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           dynamic args = call.arguments;
           CameraMacOSFile? result;
           CameraMacOSException? exception;
-          if (args is Map<String, dynamic>) {
+          if (args is Map) {
             if (args["error"] != null) {
               exception = CameraMacOSException.fromMap(args["error"]);
             }

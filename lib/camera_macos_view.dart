@@ -1,7 +1,9 @@
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_controller.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
+import 'package:camera_macos/nskit_platform_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'camera_macos_platform_interface.dart';
 
@@ -16,6 +18,7 @@ class CameraMacOSView extends StatefulWidget {
   final Widget Function(Object?)? onCameraLoading;
   final Function(CameraMacOSController) onCameraInizialized;
   final Widget Function()? onCameraDestroyed;
+  final bool usePlatformView;
 
   const CameraMacOSView({
     Key? key,
@@ -27,6 +30,7 @@ class CameraMacOSView extends StatefulWidget {
     required this.onCameraInizialized,
     this.onCameraLoading,
     this.onCameraDestroyed,
+    this.usePlatformView = false,
   }) : super(key: key);
 
   @override
@@ -95,6 +99,11 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
           }
         }
 
+        final Map<String, dynamic> creationParams = <String, dynamic>{
+          "width": snapshot.data!.size.width,
+          "height": snapshot.data!.size.height,
+        };
+
         return ClipRect(
           child: SizedBox(
             width: MediaQuery.of(context).size.width,
@@ -104,7 +113,16 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
               child: SizedBox(
                 width: snapshot.data!.size.width,
                 height: snapshot.data!.size.height,
-                child: Texture(textureId: snapshot.data!.textureId!),
+                child: widget.usePlatformView
+                    ? UiKitView(
+                        viewType: "camera_macos_view",
+                        onPlatformViewCreated: (id) {
+                          print(id);
+                        },
+                        creationParams: creationParams,
+                        creationParamsCodec: const StandardMessageCodec(),
+                      )
+                    : Texture(textureId: snapshot.data!.textureId!),
               ),
             ),
           ),
@@ -121,6 +139,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         oldWidget.audioDeviceId != widget.audioDeviceId ||
         oldWidget.cameraMode != widget.cameraMode ||
         oldWidget.enableAudio != widget.enableAudio ||
+        oldWidget.usePlatformView != widget.usePlatformView ||
         oldWidget.key != widget.key) {
       initializeCameraFuture = CameraMacOSPlatform.instance
           .initialize(
