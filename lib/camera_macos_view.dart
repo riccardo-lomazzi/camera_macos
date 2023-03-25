@@ -1,7 +1,6 @@
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_controller.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
-import 'package:camera_macos/nskit_platform_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -18,6 +17,7 @@ class CameraMacOSView extends StatefulWidget {
   final Widget Function(Object?)? onCameraLoading;
   final Function(CameraMacOSController) onCameraInizialized;
   final Widget Function()? onCameraDestroyed;
+  @visibleForTesting
   final bool usePlatformView;
 
   const CameraMacOSView({
