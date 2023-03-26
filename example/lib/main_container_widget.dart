@@ -261,7 +261,8 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                             contentPadding: EdgeInsets.zero,
                             tristate: false,
                             controlAffinity: ListTileControlAffinity.leading,
-                            title: Text("Use Platform View"),
+                            title: Text(
+                                "Use Platform View (Experimental - Not Working)"),
                             onChanged: (bool? newValue) {
                               setState(() {
                                 this.usePlatformView = newValue ?? false;

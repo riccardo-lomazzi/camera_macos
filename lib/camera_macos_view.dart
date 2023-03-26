@@ -10,14 +10,28 @@ class CameraMacOSView extends StatefulWidget {
   /// Handles how the widget should fit the screen.
   final BoxFit fit;
 
+  /// DeviceId of the video streaming device
   final String? deviceId;
+
+  /// Audio DeviceId of the audio streaming device
   final String? audioDeviceId;
+
+  /// Enable audio while recording video. Defaults to 'true'. You can always override this setting when calling the 'startRecording' method.
   final bool enableAudio;
+
+  /// Choose between audio or video mode
   final CameraMacOSMode cameraMode;
+
+  /// Callback that gets called while the "initialize" method hasn't returned a value yet.
   final Widget Function(Object?)? onCameraLoading;
+
+  /// Callback that gets called when the "initialize" method has returned a value.
   final Function(CameraMacOSController) onCameraInizialized;
+
+  /// Callback that gets called when the "destroy" method has returned.
   final Widget Function()? onCameraDestroyed;
-  @visibleForTesting
+
+  /// [EXPERIMENTAL][NOT WORKING] It won't work until Flutter will officially support macOS Platform Views.
   final bool usePlatformView;
 
   const CameraMacOSView({
