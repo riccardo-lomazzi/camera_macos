@@ -66,7 +66,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     bool enableAudio = true,
   }) async {
     try {
-      final Map<String, dynamic>? args =
+      final Map<String, dynamic>? result =
           await methodChannel.invokeMapMethod<String, dynamic>(
         'initialize',
         {
@@ -76,23 +76,27 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           "enableAudio": enableAudio,
         },
       );
-      if (args == null) {
+      if (result == null) {
         throw FlutterError("Invalid args: invalid platform response");
       }
+      if (result["error"] != null) {
+        throw result["error"];
+      }
       isDestroyed = false;
-      List<Map<String, dynamic>> devicesList = List.from(args["devices"] ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      List<Map<String, dynamic>> devicesList =
+          List.from(result["devices"] ?? [])
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
       List<CameraMacOSDevice> devices = [];
       for (Map<String, dynamic> m in devicesList) {
         CameraMacOSDevice device = CameraMacOSDevice.fromMap(m);
         devices.add(device);
       }
       return CameraMacOSArguments(
-        textureId: args["textureId"],
+        textureId: result["textureId"],
         size: Size(
-          args["size"]?["width"] ?? 0,
-          args["size"]?["height"] ?? 0,
+          result["size"]?["width"] ?? 0,
+          result["size"]?["height"] ?? 0,
         ),
         devices: devices,
       );

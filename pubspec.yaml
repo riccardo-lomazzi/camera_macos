@@ -1,6 +1,6 @@
 name: camera_macos
 description: macOS camera package implementation. Supports both internal and external cameras, can take pictures and record video with audio as well.
-version: 0.0.6+4
+version: 0.0.6+5
 repository: https://github.com/riccardo-lomazzi/camera_macos
 
 environment:

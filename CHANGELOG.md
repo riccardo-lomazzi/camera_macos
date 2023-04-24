@@ -1,3 +1,5 @@
+## 0.0.6+5
+* Fixed error reporting while initializing camera
 ## 0.0.6+4
 * Fixed a concurrency bug that could randomly prevent the AVAssetWriter from writing into the buffer and fail the recording
 * Updated docs
