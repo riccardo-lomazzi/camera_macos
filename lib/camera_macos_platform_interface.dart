@@ -44,7 +44,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<CameraMacOSFile?> takePicture() {
+  Future<CameraMacOSFile?> takePicture([PictureFormat format = PictureFormat.tiff]) {
     throw UnimplementedError("");
   }
 

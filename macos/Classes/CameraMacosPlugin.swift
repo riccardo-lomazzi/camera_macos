@@ -85,7 +85,26 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             }
             initCamera(arguments, result)
         case "takePicture":
-            takePicture(result)
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            var format:NSBitmapImageRep.FileType = NSBitmapImageRep.FileType.tiff
+            switch arguments["format"] as! String{
+            case "jpg":
+                format = NSBitmapImageRep.FileType.jpeg
+                break
+            case "jepg":
+                format = NSBitmapImageRep.FileType.jpeg2000
+                break
+            case "bmp":
+                format = NSBitmapImageRep.FileType.bmp
+                break
+            case "png":
+                format = NSBitmapImageRep.FileType.png
+                break
+            default:
+                format = NSBitmapImageRep.FileType.tiff
+                break
+            }
+            takePicture(result,format)
         case "startRecording":
             let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
             startRecording(arguments, result)
@@ -354,15 +373,15 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         }
     }
     
-    func takePicture(_ result: @escaping FlutterResult) {
-        guard let imageBuffer = latestBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer), let imageData = nsImage.tiffRepresentation, !imageData.isEmpty else {
+    func takePicture(_ result: @escaping FlutterResult, _ format: NSBitmapImageRep.FileType) {
+        guard let imageBuffer = latestBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer), let imageData = nsImage.representation(using: format, properties: [NSBitmapImageRep.PropertyKey.currentFrame: NSBitmapImageRep.PropertyKey.currentFrame.self]), !imageData.isEmpty else {
             result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil).toMap])
             return
         }
         result(["imageData": imageData, "error": nil])
     }
     
-    func imageFromSampleBuffer(imageBuffer: CVPixelBuffer) -> NSImage? {
+    func imageFromSampleBuffer(imageBuffer: CVPixelBuffer) -> NSBitmapImageRep? {
         
         CVPixelBufferLockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
         
@@ -383,7 +402,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         CVPixelBufferUnlockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
         
         // Create an image object from the Quartz image
-        let image = NSImage(cgImage:quartzImage, size: NSSize(width: width, height: height));
+        let image = NSBitmapImageRep(cgImage:quartzImage);
         
         return (image);
     }

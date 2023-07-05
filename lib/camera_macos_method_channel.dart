@@ -107,10 +107,10 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Call this method to take a picture.
   @override
-  Future<CameraMacOSFile?> takePicture() async {
+  Future<CameraMacOSFile?> takePicture([PictureFormat format = PictureFormat.tiff]) async {
     try {
       final Map<String, dynamic>? result =
-          await methodChannel.invokeMapMethod<String, dynamic>('takePicture');
+          await methodChannel.invokeMapMethod<String, dynamic>('takePicture',{'format':format.name});
       if (result == null) {
         throw FlutterError("Invalid result");
       }

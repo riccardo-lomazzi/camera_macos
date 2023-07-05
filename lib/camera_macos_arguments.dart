@@ -1,6 +1,8 @@
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:flutter/material.dart';
 
+enum PictureFormat{jpg,jpeg,tiff,bmp,png}
+
 class CameraMacOSArguments {
   /// The texture id.
   final int? textureId;
