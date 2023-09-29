@@ -62,6 +62,12 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     /// Photo or Video
     required CameraMacOSMode cameraMacOSMode,
 
+    /// format of the output photo
+    PictureFormat format = PictureFormat.tiff,
+
+    /// resolution of the output video/image
+    PictureResolution resolution = PictureResolution.max,
+
     /// Enable Audio Recording
     bool enableAudio = true,
   }) async {
@@ -74,6 +80,8 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           "audioDeviceId": audioDeviceId,
           "type": cameraMacOSMode.index,
           "enableAudio": enableAudio,
+          'resolution': resolution.name,
+          'format': format.name
         },
       );
       if (result == null) {
@@ -107,10 +115,17 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Call this method to take a picture.
   @override
-  Future<CameraMacOSFile?> takePicture([PictureFormat format = PictureFormat.tiff]) async {
+  Future<CameraMacOSFile?> takePicture({
+    PictureFormat format = PictureFormat.tiff,
+    PictureResolution resolution = PictureResolution.max
+  }) async {
     try {
-      final Map<String, dynamic>? result =
-          await methodChannel.invokeMapMethod<String, dynamic>('takePicture',{'format':format.name});
+      final Map<String, dynamic>? result = await methodChannel.invokeMapMethod<String, dynamic>(
+        'takePicture',{
+          'format': format.name,
+          'resolution': resolution.name
+        }
+      );
       if (result == null) {
         throw FlutterError("Invalid result");
       }

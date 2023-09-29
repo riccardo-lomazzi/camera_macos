@@ -49,6 +49,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var factory: CameraMacOSNativeFactory!
     var previewLayer: AVCaptureVideoPreviewLayer!
 
+    var format:NSBitmapImageRep.FileType = NSBitmapImageRep.FileType.tiff
+    var resSize:NSSize? = nil
+    var settingsAssistant:AVOutputSettingsAssistant? = nil
     
     init(_ registry: FlutterTextureRegistry, _ outputChannel: FlutterMethodChannel) {
         self.registry = registry
@@ -79,31 +82,13 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
             listDevices(arguments, result)
         case "initialize":
-            guard let arguments = call.arguments as? Dictionary<String, Any> else {
+            guard let arguments = call.arguments as? Dictionary<String, Any>
+            else {
                 result(FlutterError(code: "INVALID_ARGS", message: "", details: nil).toMap)
                 return
             }
             initCamera(arguments, result)
         case "takePicture":
-            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
-            var format:NSBitmapImageRep.FileType = NSBitmapImageRep.FileType.tiff
-            switch arguments["format"] as! String{
-            case "jpg":
-                format = NSBitmapImageRep.FileType.jpeg
-                break
-            case "jepg":
-                format = NSBitmapImageRep.FileType.jpeg2000
-                break
-            case "bmp":
-                format = NSBitmapImageRep.FileType.bmp
-                break
-            case "png":
-                format = NSBitmapImageRep.FileType.png
-                break
-            default:
-                format = NSBitmapImageRep.FileType.tiff
-                break
-            }
             takePicture(result,format)
         case "startRecording":
             let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
@@ -216,6 +201,50 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     newCameraObject = capturedVideoDevices.first(where: { $0.uniqueID == deviceId })
                 } else {
                     newCameraObject = capturedVideoDevices.first
+                }
+                
+                switch arguments["format"] as! String{
+                    case "jpg":
+                        self.format = NSBitmapImageRep.FileType.jpeg
+                        break
+                    case "jepg":
+                        self.format = NSBitmapImageRep.FileType.jpeg2000
+                        break
+                    case "bmp":
+                        self.format = NSBitmapImageRep.FileType.bmp
+                        break
+                    case "png":
+                        self.format = NSBitmapImageRep.FileType.png
+                        break
+                    default:
+                        self.format = NSBitmapImageRep.FileType.tiff
+                        break
+                }
+                switch arguments["resolution"] as! String{
+                    case "low":
+                        self.resSize = NSMakeSize(CGFloat(640), CGFloat(480))
+                        self.settingsAssistant = AVOutputSettingsAssistant(preset: .preset640x480)
+                        break
+                    case "medium":
+                        self.resSize = NSMakeSize(CGFloat(960), CGFloat(540))
+                        self.settingsAssistant = AVOutputSettingsAssistant(preset: .preset960x540)
+                        break
+                    case "high":
+                        self.resSize = NSMakeSize(CGFloat(1280), CGFloat(720))
+                        self.settingsAssistant = AVOutputSettingsAssistant(preset: .preset1280x720)
+                        break
+                    case "veryHigh":
+                        self.resSize = NSMakeSize(CGFloat(1920), CGFloat(1080))
+                        self.settingsAssistant = AVOutputSettingsAssistant(preset: .preset1920x1080)
+                        break
+                    case "ultraHigh":
+                        self.resSize = NSMakeSize(CGFloat(3840), CGFloat(2160))
+                        self.settingsAssistant = AVOutputSettingsAssistant(preset: .preset3840x2160)
+                        break
+                    default:
+                        self.resSize = nil
+                        self.settingsAssistant = AVOutputSettingsAssistant(preset: .preset1280x720)
+                        break
                 }
                 
                 guard let newCameraObject: AVCaptureDevice = newCameraObject else {
@@ -374,7 +403,13 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
     
     func takePicture(_ result: @escaping FlutterResult, _ format: NSBitmapImageRep.FileType) {
-        guard let imageBuffer = latestBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer), let imageData = nsImage.representation(using: format, properties: [NSBitmapImageRep.PropertyKey.currentFrame: NSBitmapImageRep.PropertyKey.currentFrame.self]), !imageData.isEmpty else {
+        guard let imageBuffer = latestBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer),
+                let imageData = nsImage.representation(
+                using: format,
+                properties: [
+                    NSBitmapImageRep.PropertyKey.currentFrame: NSBitmapImageRep.PropertyKey.currentFrame.self
+                ]
+            ), !imageData.isEmpty else {
             result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil).toMap])
             return
         }
@@ -395,7 +430,16 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         let colorSpace = CGColorSpaceCreateDeviceRGB();
         
         // Create a bitmap graphics context with the sample buffer data
-        guard let context = CGContext(data: baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue), let quartzImage = context.makeImage() else {
+        guard let context = CGContext(
+            data: baseAddress,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: colorSpace,
+            bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue
+        ),
+        let quartzImage = context.makeImage() else {
             return nil
         }
         
@@ -403,8 +447,19 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         
         // Create an image object from the Quartz image
         let image = NSBitmapImageRep(cgImage:quartzImage);
+        if resSize == nil || resSize!.width > CGFloat(width){
+            return image
+        }
+            
+        var newImage = NSImage(size: resSize!)
+        newImage.lockFocus()
+        image.draw(in: NSMakeRect(0, 0, resSize!.width, resSize!.height), from: NSMakeRect(0, 0, image.size.width, image.size.height), operation: NSCompositingOperation.sourceOver, fraction: CGFloat(1), respectFlipped: false, hints: nil)
+            
+        newImage.unlockFocus()
+        newImage.size = resSize!
+        return NSBitmapImageRep(data: newImage.tiffRepresentation!)
         
-        return (image);
+        //return (image);
     }
     
     func startRecording(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
@@ -454,7 +509,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     }
                     
                     videoWriter.shouldOptimizeForNetworkUse = true
-                    let settingsAssistant = AVOutputSettingsAssistant(preset: .preset1280x720)
                     
                     videoOutputQueue = DispatchQueue(label: "videoQueue", qos: .utility, attributes: .concurrent, autoreleaseFrequency: DispatchQueue.AutoreleaseFrequency.inherit, target: DispatchQueue.global())
                     guard let videoOutputQueue = videoOutputQueue else {
@@ -476,7 +530,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                             videoWriterVideoInputSettings[AVVideoCodecKey] = AVVideoCodecH264
                         }
                         
-                        if let settingsAssistant = settingsAssistant, let videoSettings = settingsAssistant.videoSettings, videoWriter.canApply(outputSettings: videoSettings, forMediaType: .video) {
+                        if let settingsAssistant = self.settingsAssistant, let videoSettings = settingsAssistant.videoSettings, videoWriter.canApply(outputSettings: videoSettings, forMediaType: .video) {
                             videoWriterVideoInputSettings = videoSettings
                         }
 
@@ -497,7 +551,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 AVNumberOfChannelsKey: 1
                             ]
                             
-                            if let settingsAssistant = settingsAssistant, let audioSettings = settingsAssistant.audioSettings, videoWriter.canApply(outputSettings: audioSettings, forMediaType: .audio) {
+                            if let settingsAssistant = self.settingsAssistant, let audioSettings = settingsAssistant.audioSettings, videoWriter.canApply(outputSettings: audioSettings, forMediaType: .audio) {
                                 videoWriterAudioInputSettings = audioSettings
                             }
                             

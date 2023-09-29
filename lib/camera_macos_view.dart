@@ -34,6 +34,13 @@ class CameraMacOSView extends StatefulWidget {
   /// [EXPERIMENTAL][NOT WORKING] It won't work until Flutter will officially support macOS Platform Views.
   final bool usePlatformView;
 
+  /// Format of the output photo
+  final PictureFormat format;
+
+  /// Resolution of the output video/image
+  final PictureResolution resolution;
+
+
   const CameraMacOSView({
     Key? key,
     this.deviceId,
@@ -45,6 +52,8 @@ class CameraMacOSView extends StatefulWidget {
     this.onCameraLoading,
     this.onCameraDestroyed,
     this.usePlatformView = false,
+    this.resolution = PictureResolution.max,
+    this.format = PictureFormat.tiff
   }) : super(key: key);
 
   @override

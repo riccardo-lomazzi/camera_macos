@@ -2,6 +2,25 @@ import 'package:camera_macos/camera_macos_device.dart';
 import 'package:flutter/material.dart';
 
 enum PictureFormat{jpg,jpeg,tiff,bmp,png}
+enum PictureResolution{
+  /// 480p (640x480)
+  low,
+
+  /// 540p (960x540)
+  medium,
+
+  /// 720p (1280x720)
+  high,
+
+  /// 1080p (1920x1080)
+  veryHigh,
+
+  /// 2160p (3840x2160)
+  ultraHigh,
+
+  /// The highest resolution available.
+  max,
+}
 
 class CameraMacOSArguments {
   /// The texture id.

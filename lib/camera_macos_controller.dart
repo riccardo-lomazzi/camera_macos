@@ -12,10 +12,8 @@ class CameraMacOSController {
   CameraMacOSPlatform get _platformInstance => CameraMacOSPlatform.instance;
 
   /// Call this method to take a picture.
-  Future<CameraMacOSFile?> takePicture([PictureFormat format = PictureFormat.tiff]) {
-    return _platformInstance.takePicture(
-      format
-    );
+  Future<CameraMacOSFile?> takePicture() {
+    return _platformInstance.takePicture();
   }
 
   /// Call this method to start a video recording.

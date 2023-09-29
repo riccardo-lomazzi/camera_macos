@@ -34,6 +34,8 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     String? deviceId,
     String? audioDeviceId,
     bool enableAudio = true,
+    PictureFormat format = PictureFormat.tiff,
+    PictureResolution resolution = PictureResolution.max,
     required CameraMacOSMode cameraMacOSMode,
   }) {
     throw UnimplementedError("");
@@ -44,7 +46,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<CameraMacOSFile?> takePicture([PictureFormat format = PictureFormat.tiff]) {
+  Future<CameraMacOSFile?> takePicture() {
     throw UnimplementedError("");
   }
 
