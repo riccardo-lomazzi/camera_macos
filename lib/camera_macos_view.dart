@@ -35,7 +35,10 @@ class CameraMacOSView extends StatefulWidget {
   final bool usePlatformView;
 
   /// Format of the output photo
-  final PictureFormat format;
+  final PictureFormat pictureFormat;
+
+  /// Format of the output video
+  final VideoFormat videoFormat;
 
   /// Resolution of the output video/image
   final PictureResolution resolution;
@@ -53,7 +56,8 @@ class CameraMacOSView extends StatefulWidget {
     this.onCameraDestroyed,
     this.usePlatformView = false,
     this.resolution = PictureResolution.max,
-    this.format = PictureFormat.tiff
+    this.pictureFormat = PictureFormat.tiff,
+    this.videoFormat = VideoFormat.mp4
   }) : super(key: key);
 
   @override

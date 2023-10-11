@@ -1,3 +1,8 @@
+## 0.0.7
+* Added ability to change the video and camera output resolution.
+* Added ability to change the file format for camera output.
+* Added ability to change the file format for video output.
+* Added image streaming
 ## 0.0.6+5
 * Fixed error reporting while initializing camera
 ## 0.0.6+4
