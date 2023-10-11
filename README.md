@@ -164,11 +164,11 @@ After a video or a picture is taken, a ```CameraMacOSFile``` object is generated
 
 - The package supports ```macOS 10.11``` and onwards.
 - The plugin is just a temporary substitutive package for the official Flutter team's ```camera``` package. It will work only on ```macOS```.
-- Focus, zoom and orientation change are currently unsupported
+- Zoom and orientation change are currently unsupported
 
 ## Future developments
 - Being able to change the audio quality
-- Focus, zoom and orientation change
+- Zoom and orientation change
 
 ## License
 
