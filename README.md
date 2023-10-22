@@ -16,6 +16,15 @@ Can take pictures and record videos, even with external cameras.
 
 ## Basic usage
 
+In your project, add these two rows to the `macos/Runner/Info.plist file:
+
+```plist
+<key>NSCameraUsageDescription</key>
+<string>your usage description here</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>your usage description here</string>
+```
+
 Integrate ```CameraMacOSView``` in your widget tree.
 You can choose a ```BoxFit``` method and a ```CameraMacOSMode``` (```photo``` or ```video```).
 When the camera is initialized, a ```CameraMacOSController``` object is created and can be used to do basic things such as taking pictures and recording videos.
@@ -81,13 +90,12 @@ You also have information about the camera object you've just created with the `
 
 Setting the focus point can be done with the ```setFocusPoint``` method.
 
-Note: the offset needs to be between 0 and 1.
-
 ``` dart
-CameraMacOSFile? file = await macOSController.setFocusPoint(cameraId,Offset(0.5,0.5));
-
-
+macOSController.setFocusPoint(cameraId, Offset(0.5,0.5));
 ```
+The `CameraMacOSView` widget enables it by default.
+
+Note: the offset needs to be between `0` and `1`.
 
 ### Taking a picture ###
 
@@ -106,12 +114,14 @@ if(file != null) {
 
 ### Streaming an Image ###
 
-Streaming an image can be done with the ```startImageStream``` method, and can be stopped with the ```stopImageStream```.
+Streaming an image can be done with the ```startImageStream``` method, and can be stopped with the ```stopImageStream``` method.
 
 ``` dart
-CameraMacOSFile? file = await macOSController.startImageStream((CameraImageData imageData){
+macOSController.startImageStream((CameraImageData imageData){
 //place your code here
 });
+
+macOSController.stopImageStream();
 
 ```
 
@@ -120,7 +130,7 @@ CameraMacOSFile? file = await macOSController.startImageStream((CameraImageData 
 Recording videos can be done with the ```recordVideo``` method, and can be stopped with the ```stopVideoRecording```.
 
 ``` dart
-await macOSController.recordVideo(
+macOSController.recordVideo(
     url: // get url from packages such as path_provider,
     maxVideoDuration: 30, // duration in seconds,
     onVideoRecordingFinished: (CameraMacOSFile? file, CameraMacOSException? exception) {
