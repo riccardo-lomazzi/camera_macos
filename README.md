@@ -5,6 +5,7 @@ Can take pictures and record videos, even with external cameras.
 
 ## Getting Started
 
+- [Setup](#setup)
 - [Basic usage](#basic-usage)
   - [Taking a picture](#taking-a-picture)
   - [Recording a video](#recording-a-video)
@@ -14,9 +15,9 @@ Can take pictures and record videos, even with external cameras.
 
 ---
 
-## Basic usage
+## Setup
 
-In your project, add these two rows to the `macos/Runner/Info.plist file:
+In your project, add these two rows to the `macos/Runner/Info.plist` file:
 
 ```plist
 <key>NSCameraUsageDescription</key>
@@ -24,6 +25,16 @@ In your project, add these two rows to the `macos/Runner/Info.plist file:
 <key>NSMicrophoneUsageDescription</key>
 <string>your usage description here</string>
 ```
+
+and these two rows in the `Debug.Entitlements` and `Release.Entitlements` files.
+```plist
+<key>com.apple.security.device.audio-input</key>
+<true/>
+<key>com.apple.security.device.camera</key>
+<true/>
+```
+
+## Basic usage
 
 Integrate ```CameraMacOSView``` in your widget tree.
 You can choose a ```BoxFit``` method and a ```CameraMacOSMode``` (```photo``` or ```video```).
