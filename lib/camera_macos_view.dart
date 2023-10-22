@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_controller.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
@@ -43,7 +45,6 @@ class CameraMacOSView extends StatefulWidget {
   /// Resolution of the output video/image
   final PictureResolution resolution;
 
-
   const CameraMacOSView({
     Key? key,
     this.deviceId,
@@ -57,7 +58,7 @@ class CameraMacOSView extends StatefulWidget {
     this.usePlatformView = false,
     this.resolution = PictureResolution.max,
     this.pictureFormat = PictureFormat.tiff,
-    this.videoFormat = VideoFormat.mp4
+    this.videoFormat = VideoFormat.mp4,
   }) : super(key: key);
 
   @override
@@ -77,6 +78,9 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
       audioDeviceId: widget.audioDeviceId,
       cameraMacOSMode: widget.cameraMode,
       enableAudio: widget.enableAudio,
+      resolution: widget.resolution,
+      pictureFormat: widget.pictureFormat,
+      videoFormat: widget.videoFormat,
     )
         .then((value) {
       if (value != null) {
@@ -126,11 +130,13 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
           }
         }
 
-        final Map<String, dynamic> creationParams = <String, dynamic>{
-          "width": snapshot.data!.size.width,
-          "height": snapshot.data!.size.height,
-        };
+        double cameraWidth = snapshot.data!.size.width;
+        double cameraHeight = snapshot.data!.size.height;
 
+        final Map<String, dynamic> creationParams = <String, dynamic>{
+          "width": cameraWidth,
+          "height": cameraHeight,
+        };
         return ClipRect(
           child: SizedBox(
             width: MediaQuery.of(context).size.width,
@@ -138,18 +144,27 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
             child: FittedBox(
               fit: widget.fit,
               child: SizedBox(
-                width: snapshot.data!.size.width,
-                height: snapshot.data!.size.height,
-                child: widget.usePlatformView
-                    ? UiKitView(
-                        viewType: "camera_macos_view",
-                        onPlatformViewCreated: (id) {
-                          print(id);
-                        },
-                        creationParams: creationParams,
-                        creationParamsCodec: const StandardMessageCodec(),
-                      )
-                    : Texture(textureId: snapshot.data!.textureId!),
+                width: cameraWidth,
+                height: cameraHeight,
+                child: GestureDetector(
+                  onTapUp: (details) => setFocusPoint(
+                    details,
+                    cameraWidth,
+                    cameraHeight,
+                  ),
+                  child: widget.usePlatformView
+                      ? UiKitView(
+                          viewType: "camera_macos_view",
+                          onPlatformViewCreated: (id) {
+                            print(id);
+                          },
+                          creationParams: creationParams,
+                          creationParamsCodec: const StandardMessageCodec(),
+                        )
+                      : Texture(
+                          textureId: snapshot.data!.textureId!,
+                        ),
+                ),
               ),
             ),
           ),
@@ -167,6 +182,9 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         oldWidget.cameraMode != widget.cameraMode ||
         oldWidget.enableAudio != widget.enableAudio ||
         oldWidget.usePlatformView != widget.usePlatformView ||
+        oldWidget.pictureFormat != widget.pictureFormat ||
+        oldWidget.resolution != widget.resolution ||
+        oldWidget.videoFormat != widget.videoFormat ||
         oldWidget.key != widget.key) {
       initializeCameraFuture = CameraMacOSPlatform.instance
           .initialize(
@@ -174,6 +192,9 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         audioDeviceId: widget.audioDeviceId,
         cameraMacOSMode: widget.cameraMode,
         enableAudio: widget.enableAudio,
+        resolution: widget.resolution,
+        pictureFormat: widget.pictureFormat,
+        videoFormat: widget.videoFormat,
       )
           .then((value) {
         if (value != null) {
@@ -185,6 +206,14 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         return value;
       });
     }
+  }
+
+  void setFocusPoint(TapUpDetails details, double maxWidth, double maxHeight) {
+    Offset newPoint = Offset(
+      details.localPosition.dx / maxWidth,
+      details.localPosition.dy / maxHeight,
+    );
+    CameraMacOS.instance.setFocusPoint(widget.deviceId, newPoint);
   }
 
   @override

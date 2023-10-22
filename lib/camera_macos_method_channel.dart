@@ -126,17 +126,13 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Call this method to take a picture.
   @override
-  Future<CameraMacOSFile?> takePicture({
-    PictureFormat format = PictureFormat.tiff,
-    PictureResolution resolution = PictureResolution.max
-  }) async {
+  Future<CameraMacOSFile?> takePicture(
+      {PictureFormat format = PictureFormat.tiff,
+      PictureResolution resolution = PictureResolution.max}) async {
     try {
-      final Map<String, dynamic>? result = await methodChannel.invokeMapMethod<String, dynamic>(
-        'takePicture',{
-          'format': format.name,
-          'resolution': resolution.name
-        }
-      );
+      final Map<String, dynamic>? result = await methodChannel
+          .invokeMapMethod<String, dynamic>('takePicture',
+              {'format': format.name, 'resolution': resolution.name});
       if (result == null) {
         throw FlutterError("Invalid result");
       }
@@ -259,17 +255,13 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     }
   }
 
-  Future<void> startImageStream(void Function(CameraImageData image) onAvailable) async{
-    events = eventChannel
-    .receiveBroadcastStream()
-    .listen((data){
-      onAvailable(
-        CameraImageData(
-          width: data['width'], 
-          height: data['height'], 
-          bytes: Uint8List.fromList(data['data'])
-        )
-      );
+  Future<void> startImageStream(
+      void Function(CameraImageData image) onAvailable) async {
+    events = eventChannel.receiveBroadcastStream().listen((data) {
+      onAvailable(CameraImageData(
+          width: data['width'],
+          height: data['height'],
+          bytes: Uint8List.fromList(data['data'])));
     });
   }
 
@@ -277,14 +269,14 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     events?.cancel();
   }
 
-  Future<void> setFocusPoint(int cameraId, Offset? point) {
+  Future<void> setFocusPoint(String? deviceId, Offset? point) {
     assert(point == null || point.dx >= 0 && point.dx <= 1);
     assert(point == null || point.dy >= 0 && point.dy <= 1);
 
     return methodChannel.invokeMethod<void>(
       'setFocusPoint',
       <String, dynamic>{
-        'deviceId': cameraId,
+        'deviceId': deviceId,
         'x': point?.dx,
         'y': point?.dy,
       },

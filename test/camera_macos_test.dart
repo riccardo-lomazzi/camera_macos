@@ -73,7 +73,7 @@ class MockCameraMacOSPlatform
   }
 
   @override
-  Future<void> setFocusPoint(int cameraId, Offset? point) {
+  Future<void> setFocusPoint(String? deviceId, Offset? point) {
     throw UnimplementedError("");
   }
 }

@@ -1,9 +1,7 @@
-import 'dart:typed_data';
-
-import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
+import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/exceptions.dart';
 import 'package:flutter/material.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -67,7 +65,8 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<void> startImageStream(void Function(CameraImageData) onAvailable) async{
+  Future<void> startImageStream(
+      void Function(CameraImageData) onAvailable) async {
     throw UnimplementedError("");
   }
 
@@ -75,7 +74,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<void> setFocusPoint(int cameraId, Offset? point) {
+  Future<void> setFocusPoint(String? deviceId, Offset? point) {
     throw UnimplementedError("");
   }
 

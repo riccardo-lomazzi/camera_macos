@@ -152,7 +152,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             capturedVideoDevices = AVCaptureDevice.captureDevices(mediaType: .video)
         }
 
-        let deviceId = arguments["deviceType"] as? String;
+        let deviceId = arguments["deviceId"] as? String;
         if let newCameraObject = capturedVideoDevices.first(where: { $0.uniqueID == deviceId }) {
             let x = arguments["x"] as! Double;
             let y = arguments["y"] as! Double;
@@ -331,11 +331,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 do {
                     let focusPoint: CGPoint = .init(x: 0.5, y: 0.5)
                     try newCameraObject.lockForConfiguration()
-                    if newCameraObject.isFocusPointOfInterestSupported {
-                        newCameraObject.focusPointOfInterest = focusPoint
-                    }
                     if newCameraObject.isFocusModeSupported(.autoFocus) {
                         newCameraObject.focusMode = .autoFocus
+                    }
+                    if newCameraObject.isFocusPointOfInterestSupported {
+                        newCameraObject.focusPointOfInterest = focusPoint
                     }
                     if newCameraObject.isExposureModeSupported(.continuousAutoExposure) {
                         newCameraObject.exposureMode = AVCaptureDevice.ExposureMode.continuousAutoExposure

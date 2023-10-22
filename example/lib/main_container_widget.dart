@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_controller.dart';
 import 'package:camera_macos/camera_macos_file.dart';
@@ -8,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as pathJoiner;
+import 'package:url_launcher/url_launcher.dart';
 
 class MainContainerWidget extends StatefulWidget {
   @override
@@ -24,6 +28,10 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   GlobalKey cameraKey = GlobalKey();
   List<CameraMacOSDevice> videoDevices = [];
   String? selectedVideoDevice;
+  PictureResolution selectedPictureResolution = PictureResolution.max;
+  PictureFormat selectedPictureFormat = PictureFormat.tiff;
+  VideoFormat selectedVideoFormat = VideoFormat.mp4;
+  File? lastPictureTaken;
 
   List<CameraMacOSDevice> audioDevices = [];
   String? selectedAudioDevice;
@@ -67,8 +75,13 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
     return label;
   }
 
+  Future<String> get imageFilePath async => pathJoiner.join(
+      (await getApplicationDocumentsDirectory()).path,
+      "P_${DateTime.now().year}${DateTime.now().month}${DateTime.now().day}_${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().second}.${selectedPictureFormat.name.replaceAll("PictureFormat.", "")}");
+
   Future<String> get videoFilePath async => pathJoiner.join(
-      (await getApplicationDocumentsDirectory()).path, "output.mp4");
+      (await getApplicationDocumentsDirectory()).path,
+      "V_${DateTime.now().year}${DateTime.now().month}${DateTime.now().day}_${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().second}.${selectedVideoFormat.name.replaceAll("VideoFormat.", "")}");
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +199,9 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                 audioDeviceId: selectedAudioDevice,
                                 fit: BoxFit.fill,
                                 cameraMode: CameraMacOSMode.photo,
+                                resolution: selectedPictureResolution,
+                                pictureFormat: selectedPictureFormat,
+                                videoFormat: selectedVideoFormat,
                                 onCameraInizialized:
                                     (CameraMacOSController controller) {
                                   setState(() {
@@ -202,23 +218,26 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                 child: Text("Tap on List Devices first"),
                               ),
                         lastImagePreviewData != null
-                            ? Container(
-                                decoration: ShapeDecoration(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: BorderSide(
-                                      color: Colors.lightBlue,
-                                      width: 10,
+                            ? InkWell(
+                                onTap: openPicture,
+                                child: Container(
+                                  decoration: ShapeDecoration(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      side: BorderSide(
+                                        color: Colors.lightBlue,
+                                        width: 10,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                child: Image.memory(
-                                  lastImagePreviewData!,
-                                  height: 50,
-                                  width: 90,
+                                  child: Image.memory(
+                                    lastImagePreviewData!,
+                                    height: 50,
+                                    width: 90,
+                                  ),
                                 ),
                               )
-                            : Container(),
+                            : const SizedBox.shrink(),
                       ],
                     ),
                   ),
@@ -269,6 +288,58 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                               });
                             },
                           ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              // Resolution
+                              Column(
+                                children: [
+                                  Text("Saved Resolution"),
+                                  DropdownButton<PictureResolution>(
+                                    value: selectedPictureResolution,
+                                    onChanged: (PictureResolution? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          this.selectedPictureResolution =
+                                              newValue;
+                                        });
+                                      }
+                                    },
+                                    items:
+                                        PictureResolution.values.map((element) {
+                                      return DropdownMenuItem(
+                                        value: element,
+                                        child: Text(element.name),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
+
+                              // PictureFormat
+                              Column(
+                                children: [
+                                  Text("Saved Picture Format"),
+                                  DropdownButton<PictureFormat>(
+                                    value: selectedPictureFormat,
+                                    onChanged: (PictureFormat? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          this.selectedPictureFormat = newValue;
+                                        });
+                                      }
+                                    },
+                                    items: PictureFormat.values.map((element) {
+                                      return DropdownMenuItem(
+                                        value: element,
+                                        child: Text(element.name),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                           Text(
                             "Camera mode",
                             style: TextStyle(
@@ -288,39 +359,65 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                               });
                             },
                           ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: RadioListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text("Video"),
-                                  value: CameraMacOSMode.video,
-                                  groupValue: cameraMode,
-                                  onChanged: (CameraMacOSMode? newMode) {
-                                    setState(() {
-                                      if (newMode != null) {
-                                        this.cameraMode = newMode;
-                                      }
-                                    });
-                                  },
-                                ),
-                              ),
-                              Visibility(
-                                visible: cameraMode == CameraMacOSMode.video,
-                                child: Expanded(
+                          RadioListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text("Video"),
+                            value: CameraMacOSMode.video,
+                            groupValue: cameraMode,
+                            onChanged: (CameraMacOSMode? newMode) {
+                              setState(() {
+                                if (newMode != null) {
+                                  this.cameraMode = newMode;
+                                }
+                              });
+                            },
+                          ),
+                          Visibility(
+                            visible: cameraMode == CameraMacOSMode.video,
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  flex: 20,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 12.0),
                                     child: TextField(
                                       controller: durationController,
                                       decoration: InputDecoration(
-                                        labelText: "Video Length",
+                                        labelText: "Video Length (in seconds)",
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                                // VideoFormat
+                                Flexible(
+                                  flex: 80,
+                                  child: Column(
+                                    children: [
+                                      Text("Video Format"),
+                                      DropdownButton<VideoFormat>(
+                                        value: selectedVideoFormat,
+                                        onChanged: (VideoFormat? newValue) {
+                                          if (newValue != null) {
+                                            setState(() {
+                                              this.selectedVideoFormat =
+                                                  newValue;
+                                            });
+                                          }
+                                        },
+                                        items:
+                                            VideoFormat.values.map((element) {
+                                          return DropdownMenuItem(
+                                            value: element,
+                                            child: Text(element.name),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -458,6 +555,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
             if (imageData != null) {
               setState(() {
                 lastImagePreviewData = imageData.bytes;
+                savePicture(lastImagePreviewData!);
               });
               showAlert(
                 title: "SUCCESS",
@@ -482,6 +580,34 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
               startRecording();
             }
             break;
+        }
+      }
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  Future<void> savePicture(Uint8List photoBytes) async {
+    try {
+      String filename = await imageFilePath;
+      File f = File(filename);
+      if (f.existsSync()) {
+        f.deleteSync(recursive: true);
+      }
+      f.createSync(recursive: true);
+      f.writeAsBytesSync(photoBytes);
+      lastPictureTaken = f;
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  Future<void> openPicture() async {
+    try {
+      if (lastPictureTaken != null) {
+        Uri uriPath = Uri.file(lastPictureTaken!.path);
+        if (await canLaunchUrl(uriPath)) {
+          await launchUrl(uriPath);
         }
       }
     } catch (e) {
