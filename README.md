@@ -77,13 +77,25 @@ A ```CameraMacOSDevice``` object contains the following properties (mapped to th
 Once you've created a ```CameraMacOSView``` widget, you will be granted access to a ```CameraMacOSController``` object, which is your bridge to do the main two features, taking pictures and recording videos.
 You also have information about the camera object you've just created with the ```CameraMacOSArguments``` property inside the controller.
 
+### Set Focus Point of Camera ###
+
+Setting the focus point can be done with the ```setFocusPoint``` method.
+
+Note: the offset needs to be between 0 and 1.
+
+``` dart
+CameraMacOSFile? file = await macOSController.setFocusPoint(cameraId,Offset(0.5,0.5));
+
+
+```
+
 ### Taking a picture ###
 
 Taking pictures can be done with the ```takePicture``` method.
 
-Note: for now, you cannot change the resolution, zoom or apply effects to the photos.
+Note: for now, you cannot change the zoom or apply effects to the photos.
 
-```
+``` dart
 CameraMacOSFile? file = await macOSController.takePicture();
 if(file != null) {
     Uint8List? bytes = file.bytes;
@@ -91,11 +103,23 @@ if(file != null) {
 }
 
 ```
+
+### Streaming an Image ###
+
+Streaming an image can be done with the ```startImageStream``` method, and can be stopped with the ```stopImageStream```.
+
+``` dart
+CameraMacOSFile? file = await macOSController.startImageStream((CameraImageData imageData){
+//place your code here
+});
+
+```
+
 ### Recording a video ###
 
 Recording videos can be done with the ```recordVideo``` method, and can be stopped with the ```stopVideoRecording```.
 
-```
+``` dart
 await macOSController.recordVideo(
     url: // get url from packages such as path_provider,
     maxVideoDuration: 30, // duration in seconds,
@@ -140,13 +164,11 @@ After a video or a picture is taken, a ```CameraMacOSFile``` object is generated
 
 - The package supports ```macOS 10.11``` and onwards.
 - The plugin is just a temporary substitutive package for the official Flutter team's ```camera``` package. It will work only on ```macOS```.
-- Focus, zoom and orientation change are currently unsupported
-- Video Recording resolution change is currently not supported
+- Zoom and orientation change are currently unsupported
 
 ## Future developments
-- Being able to change the video output resolution, and audio quality
-- Being able to change the file format
-- Focus, zoom and orientation change
+- Being able to change the audio quality
+- Zoom and orientation change
 
 ## License
 

@@ -12,11 +12,15 @@ class MockCameraMacOSPlatform
     with MockPlatformInterfaceMixin
     implements CameraMacOSPlatform {
   @override
-  Future<CameraMacOSArguments?> initialize(
-      {String? deviceId,
-      String? audioDeviceId,
-      bool enableAudio = true,
-      required CameraMacOSMode cameraMacOSMode}) {
+  Future<CameraMacOSArguments?> initialize({
+    String? deviceId,
+    String? audioDeviceId,
+    bool enableAudio = true,
+    PictureFormat pictureFormat = PictureFormat.tiff,
+    VideoFormat videoFormat = VideoFormat.mp4,
+    PictureResolution resolution = PictureResolution.max,
+    required CameraMacOSMode cameraMacOSMode,
+  }) {
     throw UnimplementedError();
   }
 
@@ -55,6 +59,22 @@ class MockCameraMacOSPlatform
       {CameraMacOSDeviceType? deviceType}) {
     // TODO: implement listDevices
     throw UnimplementedError();
+  }
+
+  @override
+  Future<void> startImageStream(
+      void Function(CameraImageData) onAvailable) async {
+    throw UnimplementedError("");
+  }
+
+  @override
+  Future<void> stopImageStream() async {
+    throw UnimplementedError("");
+  }
+
+  @override
+  Future<void> setFocusPoint(String? deviceId, Offset? point) {
+    throw UnimplementedError("");
   }
 }
 
