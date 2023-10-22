@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/exceptions.dart';
+import 'package:flutter/material.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'camera_macos_method_channel.dart';
@@ -34,6 +37,9 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     String? deviceId,
     String? audioDeviceId,
     bool enableAudio = true,
+    PictureFormat pictureFormat = PictureFormat.tiff,
+    VideoFormat videoFormat = VideoFormat.mp4,
+    PictureResolution resolution = PictureResolution.max,
     required CameraMacOSMode cameraMacOSMode,
   }) {
     throw UnimplementedError("");
@@ -58,6 +64,18 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
   }
 
   Future<CameraMacOSFile?> stopVideoRecording() {
+    throw UnimplementedError("");
+  }
+
+  Future<void> startImageStream(void Function(CameraImageData) onAvailable) async{
+    throw UnimplementedError("");
+  }
+
+  Future<void> stopImageStream() async {
+    throw UnimplementedError("");
+  }
+
+  Future<void> setFocusPoint(int cameraId, Offset? point) {
     throw UnimplementedError("");
   }
 

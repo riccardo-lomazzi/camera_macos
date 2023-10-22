@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
 import 'package:camera_macos/camera_macos_platform_interface.dart';
 import 'package:camera_macos/exceptions.dart';
+import 'package:flutter/services.dart';
 
 class CameraMacOSController {
   late CameraMacOSArguments args;
@@ -46,6 +49,18 @@ class CameraMacOSController {
   /// Destroy the camera instance
   Future<bool?> destroy() {
     return _platformInstance.destroy();
+  }
+
+  Future<void> startImageStream(void Function(CameraImageData) onAvailable) async{
+    _platformInstance.startImageStream(onAvailable);
+  }
+
+  Future<void> stopImageStream() async {
+    _platformInstance.stopImageStream();
+  }
+
+  Future<void> setFocusPoint(int cameraId, Offset? point) async{
+    _platformInstance.setFocusPoint(cameraId, point);
   }
 
   /// Getter that checks if a video is currently recording
