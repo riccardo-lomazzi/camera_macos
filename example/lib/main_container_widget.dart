@@ -444,6 +444,33 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                       ),
                       onPressed: destroyCamera,
                     ),
+                    macOSController != null
+                        ? Padding(
+                            padding: const EdgeInsets.only(left: 4.0),
+                            child: MaterialButton(
+                              color: Colors.lightBlue,
+                              textColor: Colors.white,
+                              child: Text(
+                                macOSController!.isStreamingImageData
+                                    ? "Stop Streaming Image Data"
+                                    : "Stream Image Data",
+                              ),
+                              onPressed: macOSController!.isStreamingImageData
+                                  ? stopImageStream
+                                  : startImageStream,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                    Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4.0),
+                      child: MaterialButton(
+                        color: Colors.lightBlue,
+                        textColor: Colors.white,
+                        child: Text("Open Output Folder"),
+                        onPressed: openOutputFolder,
+                      ),
+                    ),
                     MaterialButton(
                       color: Colors.lightBlue,
                       textColor: Colors.white,
@@ -609,6 +636,48 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         if (await canLaunchUrl(uriPath)) {
           await launchUrl(uriPath);
         }
+      }
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  Future<void> openOutputFolder() async {
+    try {
+      Uri uriPath =
+          Uri.directory((await getApplicationDocumentsDirectory()).path);
+      if (await canLaunchUrl(uriPath)) {
+        await launchUrl(uriPath);
+      }
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  void startImageStream() async {
+    try {
+      if (macOSController != null && !macOSController!.isStreamingImageData) {
+        print("Started streaming");
+        setState(() {
+          macOSController!.startImageStream(
+            (p0) {
+              print(p0.toString());
+            },
+          );
+        });
+      }
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  void stopImageStream() async {
+    try {
+      if (macOSController != null && macOSController!.isStreamingImageData) {
+        setState(() {
+          macOSController!.stopImageStream();
+          print("Stopped streaming");
+        });
       }
     } catch (e) {
       showAlert(message: e.toString());

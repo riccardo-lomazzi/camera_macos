@@ -3,9 +3,11 @@ import 'dart:typed_data';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:flutter/material.dart';
 
-enum PictureFormat{jpg,jpeg,tiff,bmp,png}
-enum VideoFormat{m4v,mov,mp4}
-enum PictureResolution{
+enum PictureFormat { jpg, jpeg, tiff, bmp, png }
+
+enum VideoFormat { m4v, mov, mp4 }
+
+enum PictureResolution {
   /// 480p (640x480)
   low,
 
@@ -25,22 +27,20 @@ enum PictureResolution{
   max,
 }
 
-class CameraImageData{
-  CameraImageData({
-    required this.width,
-    required this.height,
-    required this.bytes
-  });
+class CameraImageData {
+  CameraImageData(
+      {required this.width, required this.height, required this.bytes});
 
   final int width;
   final int height;
   final Uint8List bytes;
 
   @override
-  String toString(){
+  String toString() {
     return {
       'width': width,
-      'height': height
+      'height': height,
+      'size': bytes.length,
     }.toString();
   }
 }

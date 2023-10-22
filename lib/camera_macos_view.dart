@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_controller.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';

@@ -18,15 +18,14 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   static const EventChannel eventChannel = EventChannel('camera_macos/stream');
   StreamSubscription? events;
 
-  late StreamController<Uint8List> streamController;
-  Stream<Uint8List> get imageStream => streamController.stream;
-
   bool methodCallHandlerSet = false;
 
   bool isRecording = false;
   bool isDestroyed = false;
 
   Map<String, Function?> registeredCallbacks = {};
+
+  bool get isStreamingImageData => events != null && !events!.isPaused;
 
   /// Call this method to discover all camera devices.
   @override
@@ -257,12 +256,19 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   Future<void> startImageStream(
       void Function(CameraImageData image) onAvailable) async {
-    events = eventChannel.receiveBroadcastStream().listen((data) {
-      onAvailable(CameraImageData(
-          width: data['width'],
-          height: data['height'],
-          bytes: Uint8List.fromList(data['data'])));
-    });
+    events = eventChannel.receiveBroadcastStream().listen(
+      (data) {
+        onAvailable(
+          CameraImageData(
+            width: data['width'],
+            height: data['height'],
+            bytes: Uint8List.fromList(
+              data['data'],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> stopImageStream() async {
