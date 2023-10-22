@@ -163,10 +163,10 @@ if(file != null) {
 
 You can enable or disable audio recording with the ```enableAudio``` flag.
 
-Default videos settings (currently locked) are:
-- max resolution available to the selected camera
-- default microphone format (```ac1```)
-- default video format (```mp4```)
+Default videos settings are:
+- max resolution available to the selected camera - can be changed by setting the `resolution` property
+- default microphone format (```ac1```) - currently locked
+- default video format (```mp4```) - can be changed by setting the `videoFormat` property
 
 You can set a maximum video duration (in seconds) for recording videos with ```maxVideoDuration```.
 A native timer will fire after time has passed, and will call the ```onVideoRecordingFinished``` method.
