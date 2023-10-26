@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 
 enum PictureFormat{jpg,jpeg,tiff,bmp,png}
 enum VideoFormat{m4v,mov,mp4}
+enum Tourch{on,off,auto}
+
+enum CameraMacOSMode {photo,video}
 enum PictureResolution{
   /// 480p (640x480)
   low,
@@ -29,18 +32,21 @@ class CameraImageData{
   CameraImageData({
     required this.width,
     required this.height,
+    required this.bytesPerRow,
     required this.bytes
   });
 
   final int width;
   final int height;
+  final int bytesPerRow;
   final Uint8List bytes;
 
   @override
   String toString(){
     return {
       'width': width,
-      'height': height
+      'height': height,
+      'bytesPerRow': bytesPerRow
     }.toString();
   }
 }

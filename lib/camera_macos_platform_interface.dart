@@ -1,6 +1,3 @@
-import 'dart:typed_data';
-
-import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
@@ -40,6 +37,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     PictureFormat pictureFormat = PictureFormat.tiff,
     VideoFormat videoFormat = VideoFormat.mp4,
     PictureResolution resolution = PictureResolution.max,
+    Tourch toggleTourch = Tourch.off,
     required CameraMacOSMode cameraMacOSMode,
   }) {
     throw UnimplementedError("");
@@ -75,7 +73,11 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<void> setFocusPoint(int cameraId, Offset? point) {
+  Future<void> setFocusPoint(Offset point) {
+    throw UnimplementedError("");
+  }
+
+  Future<void> toggleTourch(Tourch tourch) {
     throw UnimplementedError("");
   }
 

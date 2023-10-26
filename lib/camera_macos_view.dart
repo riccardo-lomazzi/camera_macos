@@ -43,6 +43,9 @@ class CameraMacOSView extends StatefulWidget {
   /// Resolution of the output video/image
   final PictureResolution resolution;
 
+  /// Turn the light on the device on
+  final Tourch toggleTourch;
+
 
   const CameraMacOSView({
     Key? key,
@@ -57,7 +60,8 @@ class CameraMacOSView extends StatefulWidget {
     this.usePlatformView = false,
     this.resolution = PictureResolution.max,
     this.pictureFormat = PictureFormat.tiff,
-    this.videoFormat = VideoFormat.mp4
+    this.videoFormat = VideoFormat.mp4,
+    this.toggleTourch = Tourch.off
   }) : super(key: key);
 
   @override
@@ -71,14 +75,16 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
   @override
   void initState() {
     super.initState();
-    initializeCameraFuture = CameraMacOSPlatform.instance
-        .initialize(
+    initializeCameraFuture = CameraMacOSPlatform.instance.initialize(
       deviceId: widget.deviceId,
       audioDeviceId: widget.audioDeviceId,
       cameraMacOSMode: widget.cameraMode,
       enableAudio: widget.enableAudio,
-    )
-        .then((value) {
+      resolution: widget.resolution,
+      videoFormat: widget.videoFormat,
+      pictureFormat: widget.pictureFormat,
+      toggleTourch: widget.toggleTourch
+    ).then((value) {
       if (value != null) {
         this.arguments = value;
         widget.onCameraInizialized(
@@ -166,6 +172,10 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         oldWidget.audioDeviceId != widget.audioDeviceId ||
         oldWidget.cameraMode != widget.cameraMode ||
         oldWidget.enableAudio != widget.enableAudio ||
+        oldWidget.toggleTourch != widget.toggleTourch ||
+        oldWidget.resolution != widget.resolution ||
+        oldWidget.videoFormat != widget.videoFormat ||
+        oldWidget.pictureFormat != widget.pictureFormat ||
         oldWidget.usePlatformView != widget.usePlatformView ||
         oldWidget.key != widget.key) {
       initializeCameraFuture = CameraMacOSPlatform.instance
@@ -174,6 +184,10 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         audioDeviceId: widget.audioDeviceId,
         cameraMacOSMode: widget.cameraMode,
         enableAudio: widget.enableAudio,
+        resolution: widget.resolution,
+        pictureFormat: widget.pictureFormat,
+        videoFormat: widget.videoFormat,
+        toggleTourch: widget.toggleTourch
       )
           .then((value) {
         if (value != null) {
@@ -191,9 +205,4 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
   void dispose() {
     super.dispose();
   }
-}
-
-enum CameraMacOSMode {
-  photo,
-  video,
 }

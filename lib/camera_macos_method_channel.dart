@@ -1,6 +1,4 @@
 import 'dart:async';
-
-import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
@@ -80,6 +78,9 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
     /// Enable Audio Recording
     bool enableAudio = true,
+
+    /// Enable light
+    Tourch toggleTourch = Tourch.off,
   }) async {
     try {
       final Map<String, dynamic>? result =
@@ -91,6 +92,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           "type": cameraMacOSMode.index,
           "enableAudio": enableAudio,
           'resolution': resolution.name,
+          'tourch': toggleTourch.index,
           'pformat': pictureFormat.name,
           'vformat': videoFormat.name
         },
@@ -259,6 +261,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     }
   }
 
+  @override
   Future<void> startImageStream(void Function(CameraImageData image) onAvailable) async{
     events = eventChannel
     .receiveBroadcastStream()
@@ -267,26 +270,38 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
         CameraImageData(
           width: data['width'], 
           height: data['height'], 
+          bytesPerRow: data['bytesPerRow'],
           bytes: Uint8List.fromList(data['data'])
         )
       );
     });
   }
 
+  @override
   Future<void> stopImageStream() async {
     events?.cancel();
   }
 
-  Future<void> setFocusPoint(int cameraId, Offset? point) {
-    assert(point == null || point.dx >= 0 && point.dx <= 1);
-    assert(point == null || point.dy >= 0 && point.dy <= 1);
+  @override
+  Future<void> toggleTourch(Tourch tourch){
+    return methodChannel.invokeMethod<void>(
+      'toggleTourch',
+      <String, dynamic>{
+        'tourch': tourch.index,
+      },
+    );
+  }
+
+  @override
+  Future<void> setFocusPoint(Offset point) {
+    assert(point.dx >= 0 && point.dx <= 1);
+    assert(point.dy >= 0 && point.dy <= 1);
 
     return methodChannel.invokeMethod<void>(
       'setFocusPoint',
       <String, dynamic>{
-        'deviceId': cameraId,
-        'x': point?.dx,
-        'y': point?.dy,
+        'x': point.dx,
+        'y': point.dy,
       },
     );
   }

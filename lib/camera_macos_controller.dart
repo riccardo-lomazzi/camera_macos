@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_file.dart';
 import 'package:camera_macos/camera_macos_method_channel.dart';
@@ -51,6 +49,10 @@ class CameraMacOSController {
     return _platformInstance.destroy();
   }
 
+  Future<void> toggleTourch(Tourch tourch) async{
+    _platformInstance.toggleTourch(tourch);
+  }
+
   Future<void> startImageStream(void Function(CameraImageData) onAvailable) async{
     _platformInstance.startImageStream(onAvailable);
   }
@@ -59,8 +61,8 @@ class CameraMacOSController {
     _platformInstance.stopImageStream();
   }
 
-  Future<void> setFocusPoint(int cameraId, Offset? point) async{
-    _platformInstance.setFocusPoint(cameraId, point);
+  Future<void> setFocusPoint(Offset point) async{
+    _platformInstance.setFocusPoint(point);
   }
 
   /// Getter that checks if a video is currently recording

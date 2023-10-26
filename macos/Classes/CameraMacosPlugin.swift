@@ -54,6 +54,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var pictureFormat:NSBitmapImageRep.FileType = NSBitmapImageRep.FileType.tiff
     var videoFormat:AVFileType = AVFileType.mp4
     var vstring:String = "mp4"
+
     var resSize:NSSize? = nil
     var settingsAssistant:AVOutputSettingsAssistant? = nil
     
@@ -104,8 +105,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             self.sink([
                 "width": width,
                 "height": height,
+                "bytesPerRow": bytesPerRow,
                 "data": newData,
-            ]);
+            ] as [String:Any]);
         }
         return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
     }
@@ -124,6 +126,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             initCamera(arguments, result)
         case "takePicture":
             takePicture(result,pictureFormat)
+        case "toggleTourch":
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            toggleTorch(arguments, result)
         case "startRecording":
             let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
             startRecording(arguments, result)
@@ -144,23 +149,36 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
 
     func setFocusPoint(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
-        var capturedVideoDevices: [AVCaptureDevice] = []
+        // var capturedVideoDevices: [AVCaptureDevice] = []
         
-        if #available(macOS 10.15, *) {
-            capturedVideoDevices = AVCaptureDevice.captureDevices(deviceTypes: [.builtInWideAngleCamera, .externalUnknown], mediaType: .video)
-        } else {
-            capturedVideoDevices = AVCaptureDevice.captureDevices(mediaType: .video)
+        // if #available(macOS 10.15, *) {
+        //     capturedVideoDevices = AVCaptureDevice.captureDevices(deviceTypes: [.builtInWideAngleCamera, .externalUnknown], mediaType: .video)
+        // } else {
+        //     capturedVideoDevices = AVCaptureDevice.captureDevices(mediaType: .video)
+        // }
+
+        // let deviceId = arguments["deviceType"] as? String;
+        // if let newCameraObject = capturedVideoDevices.first(where: { $0.uniqueID == deviceId }) {
+        //     let x = arguments["x"] as! Double;
+        //     let y = arguments["y"] as! Double;
+
+        //     let focusPoint: CGPoint = .init(x: x, y: y)
+        //     if newCameraObject.isFocusPointOfInterestSupported {
+        //         newCameraObject.focusPointOfInterest = focusPoint
+        //     }
+        // }
+
+        let x = arguments["x"] as! Double;
+        let y = arguments["y"] as! Double;
+
+        let focusPoint: CGPoint = .init(x: x, y: y)
+        if videoDevice.isFocusPointOfInterestSupported {
+            videoDevice.focusPointOfInterest = focusPoint
+            videoDevice.unlockForConfiguration()
+            result(nil)
         }
-
-        let deviceId = arguments["deviceType"] as? String;
-        if let newCameraObject = capturedVideoDevices.first(where: { $0.uniqueID == deviceId }) {
-            let x = arguments["x"] as! Double;
-            let y = arguments["y"] as! Double;
-
-            let focusPoint: CGPoint = .init(x: x, y: y)
-            if newCameraObject.isFocusPointOfInterestSupported {
-                newCameraObject.focusPointOfInterest = focusPoint
-            }
+        else{
+            result(["error": FlutterError(code: "SET_FOCUSPOINT_ERROR", message: "This device does not have focuspoint support.", details: nil).toMap])
         }
     }
 
@@ -330,6 +348,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 self.videoDevice = newCameraObject
                 do {
                     let focusPoint: CGPoint = .init(x: 0.5, y: 0.5)
+                    let ti = arguments["tourch"] as? Int
+                    let tourch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
                     try newCameraObject.lockForConfiguration()
                     if newCameraObject.isFocusPointOfInterestSupported {
                         newCameraObject.focusPointOfInterest = focusPoint
@@ -342,6 +362,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     }
                     if newCameraObject.isExposurePointOfInterestSupported {
                         newCameraObject.exposurePointOfInterest = focusPoint
+                    }
+                    if newCameraObject.isTorchModeSupported(tourch){
+                        newCameraObject.torchMode = tourch
                     }
                     newCameraObject.unlockForConfiguration()
                     
@@ -527,15 +550,47 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             return image
         }
             
-        let newImage = NSImage(size: resSize!)
-        newImage.lockFocus()
-        image.draw(in: NSMakeRect(0, 0, resSize!.width, resSize!.height), from: NSMakeRect(0, 0, image.size.width, image.size.height), operation: NSCompositingOperation.sourceOver, fraction: CGFloat(1), respectFlipped: false, hints: nil)
-            
-        newImage.unlockFocus()
-        newImage.size = resSize!
-        return NSBitmapImageRep(data: newImage.tiffRepresentation!)
+//        let newImage = NSImage(size: resSize!)
+//        newImage.lockFocus()
+//        image.draw(in: NSMakeRect(0, 0, resSize!.width, resSize!.height), from: NSMakeRect(0, 0, image.size.width, image.size.height), operation: NSCompositingOperation.sourceOver, fraction: CGFloat(1), respectFlipped: false, hints: nil)
+//
+//        newImage.unlockFocus()
+//        newImage.size = resSize!
+        return NSBitmapImageRep(cgImage: resizeCGImage(quartzImage,CGSize(width:resSize!.width,height:resSize!.height))!)
     }
     
+    //extension CGImage {
+    func resizeCGImage(_ self:CGImage,_ size:CGSize) -> CGImage? {
+            let width: Int = Int(size.width)
+            let height: Int = Int(size.height)
+
+            let bytesPerPixel = self.bitsPerPixel / self.bitsPerComponent
+            let destBytesPerRow = width * bytesPerPixel
+
+
+            guard let colorSpace = self.colorSpace else { return nil }
+            guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: self.bitsPerComponent, bytesPerRow: destBytesPerRow, space: colorSpace, bitmapInfo: self.alphaInfo.rawValue) else { return nil }
+
+            context.interpolationQuality = .high
+            context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+            return context.makeImage()
+        }
+    //}
+
+    func toggleTorch(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
+        let ti = arguments["tourch"] as? Int
+        let tourch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
+        if videoDevice.isTorchModeSupported(tourch){
+            videoDevice.torchMode = tourch
+            videoDevice.unlockForConfiguration()
+            
+            result(nil)
+        }
+        else{
+            result(["error": FlutterError(code: "TOGGLE_TOURCH_ERROR", message: "This device does not have a light to turn on/off.", details: nil).toMap])
+        }
+    }
     func startRecording(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
         // Set up the AVAssetWriter (to write to file)
         do {
@@ -573,7 +628,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     self.isRecording = true
                     self.savedResult = result
                     movieOutput.startRecording(to: fileUrl, recordingDelegate: self)
-                } else {
+                } 
+                else {
                     self.videoWriter = try AVAssetWriter(outputURL: fileUrl, fileType: videoFormat)
                     print("Setting up AVAssetWriter")
 
@@ -738,7 +794,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 return
                             }
                             print("Video Recorded And Saved At: \(videoOutputFileURL.absoluteURL)")
-                            result(["videoData": videoData, "url": videoOutputFileURL.absoluteURL.path, "error": nil])
+                            result(["videoData": videoData, "url": videoOutputFileURL.absoluteURL.path, "error": nil] as [String:Any?])
                         default:
                             result(FlutterError(code: "ASSET_WRITER_FAIL", message: "File not saved at \(videoOutputFileURL.absoluteURL.path) - \(videoWriter.error?.localizedDescription ?? "")", details: nil).toFlutterResult)
                         }
@@ -834,7 +890,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     if self.canWrite {
                         let result: Bool = audio.append(sampleBuffer)
                         if(!result && videoWriter.status == .failed) {
-                            print("Failed to write audio input: AVAssetWriter Error - " + videoWriter.error.debugDescription + " - Frame Order: " + "Previous: \(self.latestAudioFrameWrittenTimeStamp) - Current: \(time)")
+                            print("Failed to write audio input: AVAssetWriter Error - " + videoWriter.error.debugDescription + " - Frame Order: " + "Previous: \(String(describing: self.latestAudioFrameWrittenTimeStamp)) - Current: \(time)")
                         } else if result {
                             self.latestAudioFrameWrittenTimeStamp = time
                         }
@@ -849,7 +905,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     if self.canWrite {
                         let result: Bool = camera.append(sampleBuffer)
                         if !result && videoWriter.status == .failed {
-                            print("Failed to write video input: AVAssetWriter Error - " + videoWriter.error.debugDescription + " - Frame Order: " + "Previous: \(self.latestVideoFrameWrittenTimeStamp) - Current: \(time)")
+                            print("Failed to write video input: AVAssetWriter Error - " + videoWriter.error.debugDescription + " - Frame Order: " + "Previous: \(String(describing: self.latestVideoFrameWrittenTimeStamp)) - Current: \(time)")
                         } else if result {
                             self.latestVideoFrameWrittenTimeStamp = time
                         }
@@ -881,7 +937,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             return
         }
         print("Video Recorded And Saved At: \(outputFileURL.absoluteURL)")
-        savedResult(["videoData": videoData, "url": outputFileURL.absoluteURL.path, "error": nil])
+        savedResult(["videoData": videoData, "url": outputFileURL.absoluteURL.path, "error": nil] as [String:Any?])
     }
     
 }
