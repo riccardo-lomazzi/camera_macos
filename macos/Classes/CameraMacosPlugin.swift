@@ -65,6 +65,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var zoomLevel:Double = 1.0
     var zoomPixelBuffer: CVImageBuffer?
     
+    var orientation:CGFloat = 0
+    
     init(_ registry: FlutterTextureRegistry, _ outputChannel: FlutterMethodChannel) {
         self.registry = registry
         self.outputChannel = outputChannel
@@ -151,6 +153,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         case "setZoom":
             let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
             zoomLevel = arguments["zoom"] as? Double ?? 1.0
+        case "setOrientation":
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            orientation = arguments["orientation"] as? Double ?? 0
         case "destroy":
             destroy(result)
         case "setFocusPoint":
@@ -300,6 +305,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     newCameraObject = capturedVideoDevices.first
                 }
                 
+                self.orientation = arguments["orientation"] as? Double ?? 0
+                
                 switch arguments["pformat"] as! String{
                     case "jpg":
                         self.pictureFormat = NSBitmapImageRep.FileType.jpeg
@@ -433,6 +440,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 if connection.isVideoMirroringSupported {
                                     connection.isVideoMirrored = true
                                 }
+                                if #available(macOS 14.0, *), connection.isVideoRotationAngleSupported(self.orientation){
+                                    connection.videoRotationAngle = self.orientation
+                                }
                             }
                             outputInitialized = true
                         }
@@ -446,6 +456,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                             for connection in videoOutput.connections {
                                 if connection.isVideoMirroringSupported {
                                     connection.isVideoMirrored = true
+                                }
+                                if #available(macOS 14.0, *), connection.isVideoRotationAngleSupported(self.orientation){
+                                    connection.videoRotationAngle = self.orientation
                                 }
                             }
                             outputInitialized = true
@@ -554,10 +567,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             bytesPerRow: bytesPerRow,
             space: colorSpace,
             bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue
-        ),
-        let quartzImage = context.makeImage() else {
+        )else {
             return nil
         }
+        context.rotate(by: self.orientation*Double.pi/180.0)
+        let quartzImage = context.makeImage()!
         
         CVPixelBufferUnlockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
         
@@ -580,7 +594,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             return NSBitmapImageRep(cgImage: resizeCGImage(quartzImage)!)
         }
     }
-    
     func resizeCGImage(_ self:CGImage) -> CGImage? {
         let size = CGSize(width:resSize!.width,height:resSize!.height)
         let width: Int = Int(size.width)

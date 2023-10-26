@@ -26,6 +26,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   String? selectedVideoDevice;
   PictureResolution selectedPictureResolution = PictureResolution.max;
   PictureFormat selectedPictureFormat = PictureFormat.tiff;
+  CameraOrientation selectedOrientation = CameraOrientation.orientation90deg;
   VideoFormat selectedVideoFormat = VideoFormat.mp4;
   File? lastPictureTaken;
 
@@ -235,6 +236,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                         cameraMode: CameraMacOSMode.photo,
                                         resolution: selectedPictureResolution,
                                         pictureFormat: selectedPictureFormat,
+                                        orientation: selectedOrientation,
                                         videoFormat: selectedVideoFormat,
                                         onCameraInizialized:
                                             (CameraMacOSController controller) {
@@ -299,6 +301,41 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Camera Orientation",
+                        ),
+                        Expanded(
+                        flex: 2,
+                        child:DropdownButton<String>(
+                          elevation: 3,
+                          isExpanded: true,
+                          value: selectedOrientation.index.toString(),
+                          underline: Container(color: Colors.transparent),
+                          items: [DropdownMenuItem(
+                              value: '0',
+                              child: Text('0'),
+                            ),DropdownMenuItem(
+                              value: '1',
+                              child: Text('90'),
+                            ),DropdownMenuItem(
+                              value: '2',
+                              child: Text('180'),
+                            ),DropdownMenuItem(
+                              value: '3',
+                              child: Text('270'),
+                            )],
+                          onChanged: (String? or) {
+                            setState(() {
+                              selectedOrientation = CameraOrientation.values[int.parse(or!)];
+                            });
+                          },
+                        ),
+                      )
+                    ],
                   ),
                   Row(
                     children: [

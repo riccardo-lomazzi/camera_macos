@@ -117,6 +117,28 @@ macOSController.toggleTourch(Tourch.on);
 ```
 The `CameraMacOSView` widget disables it by default.
 
+### Setting Orientation ###
+
+Setting the orientation to 0, 90, 180, or 270 can be done with the ```setOrientation``` method.
+
+Note: This feature for video is only available for osx 14.0 and up.
+
+``` dart
+macOSController.setOrientation(CameraOrientation.orientation0deg);
+```
+The `CameraMacOSView` widget defaults to 0.
+
+### Setting Zoom ###
+
+Setting the zoom from 1 - inifity can be done with the ```setZoomLevel``` method.
+
+Note: This feature is only available for imageStream right now.
+
+``` dart
+macOSController.setZoomLevel(1.0);
+```
+The `CameraMacOSView` widget defaults to 1.
+
 ### Taking a picture ###
 
 Taking pictures can be done with the ```takePicture``` method.
@@ -196,11 +218,11 @@ After a video or a picture is taken, a ```CameraMacOSFile``` object is generated
 
 - The package supports ```macOS 10.11``` and onwards.
 - The plugin is just a temporary substitutive package for the official Flutter team's ```camera``` package. It will work only on ```macOS```.
-- Zoom and orientation change are currently unsupported
+- Zoom is currently unsupported
 
 ## Future developments
 - Being able to change the audio quality
-- Zoom and orientation change
+- Zoom for video and texture
 
 ## License
 

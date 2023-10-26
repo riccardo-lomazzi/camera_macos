@@ -46,6 +46,8 @@ class CameraMacOSView extends StatefulWidget {
   /// Turn the light on the device on
   final Tourch toggleTourch;
 
+  /// The Orientation of the camera
+  final CameraOrientation orientation;
 
   const CameraMacOSView({
     Key? key,
@@ -61,7 +63,8 @@ class CameraMacOSView extends StatefulWidget {
     this.resolution = PictureResolution.max,
     this.pictureFormat = PictureFormat.tiff,
     this.videoFormat = VideoFormat.mp4,
-    this.toggleTourch = Tourch.off
+    this.toggleTourch = Tourch.off,
+    this.orientation = CameraOrientation.orientation0deg
   }) : super(key: key);
 
   @override
@@ -83,7 +86,8 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
       resolution: widget.resolution,
       videoFormat: widget.videoFormat,
       pictureFormat: widget.pictureFormat,
-      toggleTourch: widget.toggleTourch
+      toggleTourch: widget.toggleTourch,
+      orientation: widget.orientation
     ).then((value) {
       if (value != null) {
         this.arguments = value;
@@ -189,7 +193,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         oldWidget.pictureFormat != widget.pictureFormat ||
         oldWidget.usePlatformView != widget.usePlatformView ||
         oldWidget.pictureFormat != widget.pictureFormat ||
-        oldWidget.resolution != widget.resolution ||
+        oldWidget.orientation != widget.orientation ||
         oldWidget.videoFormat != widget.videoFormat ||
         oldWidget.key != widget.key) {
       initializeCameraFuture = CameraMacOSPlatform.instance
@@ -201,7 +205,8 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         resolution: widget.resolution,
         pictureFormat: widget.pictureFormat,
         videoFormat: widget.videoFormat,
-        toggleTourch: widget.toggleTourch
+        toggleTourch: widget.toggleTourch,
+        orientation: widget.orientation
       )
           .then((value) {
         if (value != null) {

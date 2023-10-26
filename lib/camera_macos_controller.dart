@@ -74,6 +74,10 @@ class CameraMacOSController {
     _platformInstance.setZoomLevel(zoom);
   }
 
+  Future<void> setOrientation(CameraOrientation orientation) async{
+    _platformInstance.setOrientation(orientation);
+  }
+
   /// Getter that checks if a video is currently recording
   bool get isRecording =>
       (_platformInstance as MethodChannelCameraMacOS).isRecording;

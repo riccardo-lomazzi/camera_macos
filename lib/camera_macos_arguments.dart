@@ -30,6 +30,14 @@ enum PictureResolution {
   max,
 }
 
+/// The camera orientation angle to be specified
+enum CameraOrientation {
+  orientation0deg,
+  orientation90deg,
+  orientation180deg,
+  orientation270deg
+}
+
 //double get getMaxZoomLevel => 
 
 class CameraImageData{

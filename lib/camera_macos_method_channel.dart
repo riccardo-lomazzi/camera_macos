@@ -80,6 +80,9 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
     /// Enable light
     Tourch toggleTourch = Tourch.off,
+
+    /// Set camera orientation
+    CameraOrientation orientation = CameraOrientation.orientation0deg
   }) async {
     try {
       final Map<String, dynamic>? result =
@@ -91,6 +94,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           "type": cameraMacOSMode.index,
           "enableAudio": enableAudio,
           'resolution': resolution.name,
+          'orientation': orientation.index*90.0,
           'tourch': toggleTourch.index,
           'pformat': pictureFormat.name,
           'vformat': videoFormat.name
@@ -309,6 +313,16 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
       'setZoom',
       <String, dynamic>{
         'zoom': zoom,
+      },
+    );
+  }
+
+  @override
+  Future<void> setOrientation(CameraOrientation orientation) {
+    return methodChannel.invokeMethod<void>(
+      'setOrientation',
+      <String, dynamic>{
+        'orientation': orientation.index,
       },
     );
   }

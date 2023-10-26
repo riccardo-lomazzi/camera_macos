@@ -35,6 +35,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     VideoFormat videoFormat = VideoFormat.mp4,
     PictureResolution resolution = PictureResolution.max,
     Tourch toggleTourch = Tourch.off,
+    CameraOrientation orientation = CameraOrientation.orientation0deg,
     required CameraMacOSMode cameraMacOSMode,
   }) {
     throw UnimplementedError("");
@@ -76,6 +77,10 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
   }
 
   Future<void> setZoomLevel(double zoom) {
+    throw UnimplementedError("");
+  }
+
+  Future<void> setOrientation(CameraOrientation orientation) {
     throw UnimplementedError("");
   }
 
