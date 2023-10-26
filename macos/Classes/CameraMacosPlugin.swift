@@ -1,6 +1,10 @@
 import Cocoa
 import FlutterMacOS
 import AVFoundation
+import Accelerate.vImage
+import CoreVideo.CVPixelBuffer
+import Accelerate.vecLib
+import CoreImage.CIContext
 
 public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, AVAssetWriterDelegate, AVCaptureFileOutputRecordingDelegate,
     FlutterStreamHandler{
@@ -57,6 +61,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
 
     var resSize:NSSize? = nil
     var settingsAssistant:AVOutputSettingsAssistant? = nil
+
+    var zoomLevel:Double = 1.0
+    var zoomPixelBuffer: CVImageBuffer?
     
     init(_ registry: FlutterTextureRegistry, _ outputChannel: FlutterMethodChannel) {
         self.registry = registry
@@ -109,7 +116,14 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 "data": newData,
             ] as [String:Any]);
         }
-        return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
+        
+//        if zoomLevel > 1.0{
+//            zoomCVPixelBuffer(latestBuffer)
+//            return Unmanaged<CVPixelBuffer>.passRetained(zoomPixelBuffer!)
+//        }
+//        else{
+            return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
+//        }
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -134,6 +148,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             startRecording(arguments, result)
         case "stopRecording":
             stopRecording(result)
+        case "setZoom":
+            let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
+            zoomLevel = arguments["zoom"] as? Double ?? 1.0
         case "destroy":
             destroy(result)
         case "setFocusPoint":
@@ -545,38 +562,109 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         CVPixelBufferUnlockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
         
         // Create an image object from the Quartz image
-        let image = NSBitmapImageRep(cgImage:quartzImage);
-        if resSize == nil || resSize!.width > CGFloat(width){
-            return image
-        }
+        if resSize == nil || resSize!.width >= CGFloat(width){
+            if zoomLevel > 1.0{
+                resSize = CGSize(width:width,height:height)
+                return NSBitmapImageRep(cgImage: zoomCGImage(quartzImage))
+            }
+            else{
+                return NSBitmapImageRep(cgImage:quartzImage)
+            }
             
-//        let newImage = NSImage(size: resSize!)
-//        newImage.lockFocus()
-//        image.draw(in: NSMakeRect(0, 0, resSize!.width, resSize!.height), from: NSMakeRect(0, 0, image.size.width, image.size.height), operation: NSCompositingOperation.sourceOver, fraction: CGFloat(1), respectFlipped: false, hints: nil)
-//
-//        newImage.unlockFocus()
-//        newImage.size = resSize!
-        return NSBitmapImageRep(cgImage: resizeCGImage(quartzImage,CGSize(width:resSize!.width,height:resSize!.height))!)
+        }
+
+        if zoomLevel > 1.0{
+            return NSBitmapImageRep(cgImage: zoomCGImage(resizeCGImage(quartzImage)!))
+        }
+        else{
+            return NSBitmapImageRep(cgImage: resizeCGImage(quartzImage)!)
+        }
     }
     
-    //extension CGImage {
-    func resizeCGImage(_ self:CGImage,_ size:CGSize) -> CGImage? {
-            let width: Int = Int(size.width)
-            let height: Int = Int(size.height)
+    func resizeCGImage(_ self:CGImage) -> CGImage? {
+        let size = CGSize(width:resSize!.width,height:resSize!.height)
+        let width: Int = Int(size.width)
+        let height: Int = Int(size.height)
 
-            let bytesPerPixel = self.bitsPerPixel / self.bitsPerComponent
-            let destBytesPerRow = width * bytesPerPixel
+        let bytesPerPixel = self.bitsPerPixel / self.bitsPerComponent
+        let destBytesPerRow = width * bytesPerPixel
 
 
-            guard let colorSpace = self.colorSpace else { return nil }
-            guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: self.bitsPerComponent, bytesPerRow: destBytesPerRow, space: colorSpace, bitmapInfo: self.alphaInfo.rawValue) else { return nil }
+        guard let colorSpace = self.colorSpace else { return nil }
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: self.bitsPerComponent, bytesPerRow: destBytesPerRow, space: colorSpace, bitmapInfo: self.alphaInfo.rawValue) else { return nil }
 
-            context.interpolationQuality = .high
-            context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
+        context.interpolationQuality = .high
+        context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-            return context.makeImage()
+        return context.makeImage()
+    }
+    /**
+     First crops the pixel buffer, then resizes it.
+     */
+    public func zoomCVPixelBuffer(_ srcPixelBuffer: CVPixelBuffer){
+        
+        CVPixelBufferLockBaseAddress(srcPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        guard let srcData = CVPixelBufferGetBaseAddress(srcPixelBuffer) else {
+            print("Error: could not get pixel buffer base address")
+            return
         }
-    //}
+        let srcBytesPerRow = CVPixelBufferGetBytesPerRow(srcPixelBuffer)
+        
+        let width = CVPixelBufferGetWidth(latestBuffer)
+        let height = CVPixelBufferGetHeight(latestBuffer)
+        let size:CGSize = CGSize(width: Double(width)/zoomLevel, height: Double(height)/zoomLevel)
+        let x = (Double(width)-size.width/zoomLevel)/2
+        let y = (Double(height)-size.height/zoomLevel)/2
+        let rect = CGRect(x:x,y:y,width:size.width/zoomLevel,height:size.height/zoomLevel)
+        
+        let offset = Int(y) * srcBytesPerRow + Int(x)*4
+        var srcBuffer = vImage_Buffer(data: srcData.advanced(by: offset),
+                                      height: vImagePixelCount(size.height),
+                                      width: vImagePixelCount(size.width),
+                                      rowBytes: srcBytesPerRow)
+        
+        let destBytesPerRow = width*4
+        guard let destData = malloc(height*destBytesPerRow) else {
+            print("Error: out of memory")
+            return
+        }
+        var destBuffer = vImage_Buffer(data: destData,
+                                       height: vImagePixelCount(height),
+                                       width: vImagePixelCount(width),
+                                       rowBytes: destBytesPerRow)
+        
+        let error = vImageScale_ARGB8888(&srcBuffer, &destBuffer, nil, vImage_Flags(0))
+        CVPixelBufferUnlockBaseAddress(srcPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+        if error != kvImageNoError {
+            print("Error:", error)
+            free(destData)
+            return
+        }
+        
+        let releaseCallback: CVPixelBufferReleaseBytesCallback = { _, ptr in
+            if let ptr = ptr {
+                free(UnsafeMutableRawPointer(mutating: ptr))
+            }
+        }
+        
+        let pixelFormat = CVPixelBufferGetPixelFormatType(srcPixelBuffer)
+        
+        let status = CVPixelBufferCreateWithBytes(nil, width, height,
+                                                  pixelFormat, destData,
+                                                  destBytesPerRow, releaseCallback,
+                                                  nil, nil, &zoomPixelBuffer)
+        if status != kCVReturnSuccess {
+            print("Error: could not create new pixel buffer")
+            free(destData)
+            return
+        }
+    }
+    func zoomCGImage(_ image: CGImage) -> CGImage {
+        let x = (resSize!.width-resSize!.width/zoomLevel)/2
+        let y = (resSize!.height-resSize!.height/zoomLevel)/2
+        let toRect = CGRect(x:x,y:y,width:resSize!.width/zoomLevel,height:resSize!.height/zoomLevel)
+        return resizeCGImage(image.cropping(to: toRect)!)!
+    }
 
     func toggleTorch(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
         let ti = arguments["tourch"] as? Int

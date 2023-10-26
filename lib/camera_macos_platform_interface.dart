@@ -1,8 +1,4 @@
-import 'package:camera_macos/camera_macos_arguments.dart';
-import 'package:camera_macos/camera_macos_device.dart';
-import 'package:camera_macos/camera_macos_file.dart';
-import 'package:camera_macos/camera_macos_view.dart';
-import 'package:camera_macos/exceptions.dart';
+import 'package:camera_macos/camera_macos.dart';
 import 'package:flutter/material.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -76,6 +72,10 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
   }
 
   Future<void> setFocusPoint(Offset point) {
+    throw UnimplementedError("");
+  }
+
+  Future<void> setZoomLevel(double zoom) {
     throw UnimplementedError("");
   }
 

@@ -1,3 +1,7 @@
+## 0.0.8
+* Bug Fixes: Fixed issue with startimagestream on macos 14.0
+* Added ability to turn light on or off
+* Removed deviceId requirment from setFocusPoint
 ## 0.0.7+2
 * Updated README.md
 ## 0.0.7+1

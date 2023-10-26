@@ -30,6 +30,8 @@ enum PictureResolution {
   max,
 }
 
+//double get getMaxZoomLevel => 
+
 class CameraImageData{
   CameraImageData({
     required this.width,

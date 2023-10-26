@@ -300,4 +300,16 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
       },
     );
   }
+
+  @override
+  Future<void> setZoomLevel(double zoom) {
+    assert(zoom >= 0 && zoom <= 10.0);
+
+    return methodChannel.invokeMethod<void>(
+      'setZoom',
+      <String, dynamic>{
+        'zoom': zoom,
+      },
+    );
+  }
 }

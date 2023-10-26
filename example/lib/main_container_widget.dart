@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos_example/input_image.dart';
@@ -37,6 +38,8 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   bool streamImage = false;
 
   CameraImageData? streamedImage;
+
+  double zoom = 1.0;
 
   @override
   void initState() {
@@ -200,27 +203,54 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                 onTapDown: (t){
                                   macOSController?.setFocusPoint(Offset(t.localPosition.dx/(size.width-24), t.localPosition.dy/((size.width-24)*(9/16))));
                                 },
-                                child: CameraMacOSView(
-                                  key: cameraKey,
-                                  deviceId: selectedVideoDevice,
-                                  audioDeviceId: selectedAudioDevice,
-                                  fit: BoxFit.fill,
-                                  cameraMode: CameraMacOSMode.photo,
-                                  resolution: selectedPictureResolution,
-                                pictureFormat: selectedPictureFormat,
-                                videoFormat: selectedVideoFormat,
-                                onCameraInizialized:
-                                      (CameraMacOSController controller) {
-                                    setState(() {
-                                      macOSController = controller;
-                                    });
-                                  },
-                                  onCameraDestroyed: () {
-                                    return Text("Camera Destroyed!");
-                                  },
-                                  toggleTourch: enableTourch?Tourch.on:Tourch.off,
-                                  enableAudio: enableAudio,
-                                  usePlatformView: usePlatformView,
+                                child: Stack(
+                                  alignment: Alignment.topLeft,
+                                  children: [
+                                    Positioned(
+                                      left:0,
+                                      child:SizedBox(
+                                        height: (size.width-24)*(9/16),
+                                        child: RotatedBox(
+                                        quarterTurns: 1,
+                                          child: Slider(
+                                            activeColor: Colors.red,
+                                            value: zoom,
+                                            min: 1.0,
+                                            max: 8.0,
+                                            onChanged: (value) {
+                                              macOSController?.setZoomLevel(value);
+                                              setState(() => zoom = value);
+                                            },
+                                          )
+                                        )
+                                      )
+                                    ),
+                                    Container(
+                                      margin: EdgeInsets.only(left:40),
+                                      child: CameraMacOSView(
+                                        key: cameraKey,
+                                        deviceId: selectedVideoDevice,
+                                        audioDeviceId: selectedAudioDevice,
+                                        fit: BoxFit.fitWidth,
+                                        cameraMode: CameraMacOSMode.photo,
+                                        resolution: selectedPictureResolution,
+                                        pictureFormat: selectedPictureFormat,
+                                        videoFormat: selectedVideoFormat,
+                                        onCameraInizialized:
+                                            (CameraMacOSController controller) {
+                                          setState(() {
+                                            macOSController = controller;
+                                          });
+                                        },
+                                        onCameraDestroyed: () {
+                                          return Text("Camera Destroyed!");
+                                        },
+                                        toggleTourch: enableTourch?Tourch.on:Tourch.off,
+                                        enableAudio: enableAudio,
+                                        usePlatformView: usePlatformView,
+                                      )
+                                    )
+                                  ]
                                 )
                               )
                             )

@@ -102,11 +102,20 @@ You also have information about the camera object you've just created with the `
 Setting the focus point can be done with the ```setFocusPoint``` method.
 
 ``` dart
-macOSController.setFocusPoint(cameraId, Offset(0.5,0.5));
+macOSController.setFocusPoint(Offset(0.5,0.5));
 ```
 The `CameraMacOSView` widget enables it by default.
 
 Note: the offset needs to be between `0` and `1`.
+
+### Toggling Tourch ###
+
+Setting the tourch to on, off, or auto can be done with the ```toggleTourch``` method.
+
+``` dart
+macOSController.toggleTourch(Tourch.on);
+```
+The `CameraMacOSView` widget disables it by default.
 
 ### Taking a picture ###
 
@@ -136,6 +145,8 @@ macOSController.stopImageStream();
 
 ```
 
+Note: the streamed data is in argb8888 format
+
 ### Recording a video ###
 
 Recording videos can be done with the ```recordVideo``` method, and can be stopped with the ```stopVideoRecording```.
@@ -147,7 +158,7 @@ macOSController.recordVideo(
     onVideoRecordingFinished: (CameraMacOSFile? file, CameraMacOSException? exception) {
         // called when maxVideoDuration has been reached
         // do something with the file or catch the exception
-    });
+    }
 );
 
 CameraMacOSFile? file = await macOSController.stopVideoRecording();
