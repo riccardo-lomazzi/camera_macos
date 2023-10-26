@@ -132,11 +132,13 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
           }
         }
 
-        final Map<String, dynamic> creationParams = <String, dynamic>{
-          "width": snapshot.data!.size.width,
-          "height": snapshot.data!.size.height,
-        };
+        double cameraWidth = snapshot.data!.size.width;
+        double cameraHeight = snapshot.data!.size.height;
 
+        final Map<String, dynamic> creationParams = <String, dynamic>{
+          "width": cameraWidth,
+          "height": cameraHeight,
+        };
         return ClipRect(
           child: SizedBox(
             width: MediaQuery.of(context).size.width,
@@ -144,18 +146,27 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
             child: FittedBox(
               fit: widget.fit,
               child: SizedBox(
-                width: snapshot.data!.size.width,
-                height: snapshot.data!.size.height,
-                child: widget.usePlatformView
-                    ? UiKitView(
-                        viewType: "camera_macos_view",
-                        onPlatformViewCreated: (id) {
-                          print(id);
-                        },
-                        creationParams: creationParams,
-                        creationParamsCodec: const StandardMessageCodec(),
-                      )
-                    : Texture(textureId: snapshot.data!.textureId!),
+                width: cameraWidth,
+                height: cameraHeight,
+                child: GestureDetector(
+                  onTapUp: (details) => setFocusPoint(
+                    details,
+                    cameraWidth,
+                    cameraHeight,
+                  ),
+                  child: widget.usePlatformView
+                      ? UiKitView(
+                          viewType: "camera_macos_view",
+                          onPlatformViewCreated: (id) {
+                            print(id);
+                          },
+                          creationParams: creationParams,
+                          creationParamsCodec: const StandardMessageCodec(),
+                        )
+                      : Texture(
+                          textureId: snapshot.data!.textureId!,
+                        ),
+                ),
               ),
             ),
           ),
@@ -177,6 +188,9 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         oldWidget.videoFormat != widget.videoFormat ||
         oldWidget.pictureFormat != widget.pictureFormat ||
         oldWidget.usePlatformView != widget.usePlatformView ||
+        oldWidget.pictureFormat != widget.pictureFormat ||
+        oldWidget.resolution != widget.resolution ||
+        oldWidget.videoFormat != widget.videoFormat ||
         oldWidget.key != widget.key) {
       initializeCameraFuture = CameraMacOSPlatform.instance
           .initialize(
@@ -199,6 +213,14 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         return value;
       });
     }
+  }
+
+  void setFocusPoint(TapUpDetails details, double maxWidth, double maxHeight) {
+    Offset newPoint = Offset(
+      details.localPosition.dx / maxWidth,
+      details.localPosition.dy / maxHeight,
+    );
+    CameraMacOS.instance.setFocusPoint(newPoint);
   }
 
   @override

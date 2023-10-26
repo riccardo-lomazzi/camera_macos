@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos_example/input_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as pathJoiner;
+import 'package:url_launcher/url_launcher.dart';
 
 class MainContainerWidget extends StatefulWidget {
   @override
@@ -20,6 +23,10 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   GlobalKey cameraKey = GlobalKey();
   List<CameraMacOSDevice> videoDevices = [];
   String? selectedVideoDevice;
+  PictureResolution selectedPictureResolution = PictureResolution.max;
+  PictureFormat selectedPictureFormat = PictureFormat.tiff;
+  VideoFormat selectedVideoFormat = VideoFormat.mp4;
+  File? lastPictureTaken;
 
   List<CameraMacOSDevice> audioDevices = [];
   String? selectedAudioDevice;
@@ -67,7 +74,13 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
     return label;
   }
 
-  Future<String> get videoFilePath async => pathJoiner.join((await getApplicationDocumentsDirectory()).path, "output.mp4");
+  Future<String> get imageFilePath async => pathJoiner.join(
+      (await getApplicationDocumentsDirectory()).path,
+      "P_${DateTime.now().year}${DateTime.now().month}${DateTime.now().day}_${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().second}.${selectedPictureFormat.name.replaceAll("PictureFormat.", "")}");
+
+  Future<String> get videoFilePath async => pathJoiner.join(
+      (await getApplicationDocumentsDirectory()).path,
+      "V_${DateTime.now().year}${DateTime.now().month}${DateTime.now().day}_${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().second}.${selectedVideoFormat.name.replaceAll("VideoFormat.", "")}");
 
   @override
   Widget build(BuildContext context) {
@@ -193,8 +206,10 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                   audioDeviceId: selectedAudioDevice,
                                   fit: BoxFit.fill,
                                   cameraMode: CameraMacOSMode.photo,
-                                  resolution: PictureResolution.medium,
-                                  onCameraInizialized:
+                                  resolution: selectedPictureResolution,
+                                pictureFormat: selectedPictureFormat,
+                                videoFormat: selectedVideoFormat,
+                                onCameraInizialized:
                                       (CameraMacOSController controller) {
                                     setState(() {
                                       macOSController = controller;
@@ -213,23 +228,26 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                 child: Text("Tap on List Devices first"),
                               ),
                         lastImagePreviewData != null
-                            ? Container(
-                                decoration: ShapeDecoration(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: BorderSide(
-                                      color: Colors.lightBlue,
-                                      width: 10,
+                            ? InkWell(
+                                onTap: openPicture,
+                                child: Container(
+                                  decoration: ShapeDecoration(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      side: BorderSide(
+                                        color: Colors.lightBlue,
+                                        width: 10,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                child: Image.memory(
-                                  lastImagePreviewData!,
-                                  height: 50,
-                                  width: 90,
+                                  child: Image.memory(
+                                    lastImagePreviewData!,
+                                    height: 50,
+                                    width: 90,
+                                  ),
                                 ),
                               )
-                            : Container(),
+                            : const SizedBox.shrink(),
                       ],
                     ),
                     SizedBox(height: 10,),
@@ -514,6 +532,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
             if (imageData != null) {
               setState(() {
                 lastImagePreviewData = imageData.bytes;
+                savePicture(lastImagePreviewData!);
               });
               showAlert(
                 title: "SUCCESS",
@@ -539,6 +558,76 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
             }
             break;
         }
+      }
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  Future<void> savePicture(Uint8List photoBytes) async {
+    try {
+      String filename = await imageFilePath;
+      File f = File(filename);
+      if (f.existsSync()) {
+        f.deleteSync(recursive: true);
+      }
+      f.createSync(recursive: true);
+      f.writeAsBytesSync(photoBytes);
+      lastPictureTaken = f;
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  Future<void> openPicture() async {
+    try {
+      if (lastPictureTaken != null) {
+        Uri uriPath = Uri.file(lastPictureTaken!.path);
+        if (await canLaunchUrl(uriPath)) {
+          await launchUrl(uriPath);
+        }
+      }
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  Future<void> openOutputFolder() async {
+    try {
+      Uri uriPath =
+          Uri.directory((await getApplicationDocumentsDirectory()).path);
+      if (await canLaunchUrl(uriPath)) {
+        await launchUrl(uriPath);
+      }
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  void startImageStream() async {
+    try {
+      if (macOSController != null && !macOSController!.isStreamingImageData) {
+        print("Started streaming");
+        setState(() {
+          macOSController!.startImageStream(
+            (p0) {
+              print(p0.toString());
+            },
+          );
+        });
+      }
+    } catch (e) {
+      showAlert(message: e.toString());
+    }
+  }
+
+  void stopImageStream() async {
+    try {
+      if (macOSController != null && macOSController!.isStreamingImageData) {
+        setState(() {
+          macOSController!.stopImageStream();
+          print("Stopped streaming");
+        });
       }
     } catch (e) {
       showAlert(message: e.toString());

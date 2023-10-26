@@ -53,7 +53,8 @@ class CameraMacOSController {
     _platformInstance.toggleTourch(tourch);
   }
 
-  Future<void> startImageStream(void Function(CameraImageData) onAvailable) async{
+  Future<void> startImageStream(
+      void Function(CameraImageData) onAvailable) async {
     _platformInstance.startImageStream(onAvailable);
   }
 
@@ -72,4 +73,8 @@ class CameraMacOSController {
   /// Getter that checks if a camera instance has been destroyed or not initiliazed yet.
   bool get isDestroyed =>
       (_platformInstance as MethodChannelCameraMacOS).isDestroyed;
+
+  /// Getter that checks if the image stream is running
+  bool get isStreamingImageData =>
+      (_platformInstance as MethodChannelCameraMacOS).isStreamingImageData;
 }

@@ -1,3 +1,7 @@
+## 0.0.7+2
+* Updated README.md
+## 0.0.7+1
+* Updated README.md
 ## 0.0.7
 * Added ability to change the video and camera output resolution.
 * Added ability to change the file format for camera output.

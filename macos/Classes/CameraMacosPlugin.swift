@@ -351,11 +351,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     let ti = arguments["tourch"] as? Int
                     let tourch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
                     try newCameraObject.lockForConfiguration()
-                    if newCameraObject.isFocusPointOfInterestSupported {
-                        newCameraObject.focusPointOfInterest = focusPoint
-                    }
                     if newCameraObject.isFocusModeSupported(.autoFocus) {
                         newCameraObject.focusMode = .autoFocus
+                    }
+                    if newCameraObject.isFocusPointOfInterestSupported {
+                        newCameraObject.focusPointOfInterest = focusPoint
                     }
                     if newCameraObject.isExposureModeSupported(.continuousAutoExposure) {
                         newCameraObject.exposureMode = AVCaptureDevice.ExposureMode.continuousAutoExposure

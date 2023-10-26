@@ -16,15 +16,14 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   static const EventChannel eventChannel = EventChannel('camera_macos/stream');
   StreamSubscription? events;
 
-  late StreamController<Uint8List> streamController;
-  Stream<Uint8List> get imageStream => streamController.stream;
-
   bool methodCallHandlerSet = false;
 
   bool isRecording = false;
   bool isDestroyed = false;
 
   Map<String, Function?> registeredCallbacks = {};
+
+  bool get isStreamingImageData => events != null && !events!.isPaused;
 
   /// Call this method to discover all camera devices.
   @override
@@ -128,17 +127,13 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Call this method to take a picture.
   @override
-  Future<CameraMacOSFile?> takePicture({
-    PictureFormat format = PictureFormat.tiff,
-    PictureResolution resolution = PictureResolution.max
-  }) async {
+  Future<CameraMacOSFile?> takePicture(
+      {PictureFormat format = PictureFormat.tiff,
+      PictureResolution resolution = PictureResolution.max}) async {
     try {
-      final Map<String, dynamic>? result = await methodChannel.invokeMapMethod<String, dynamic>(
-        'takePicture',{
-          'format': format.name,
-          'resolution': resolution.name
-        }
-      );
+      final Map<String, dynamic>? result = await methodChannel
+          .invokeMapMethod<String, dynamic>('takePicture',
+              {'format': format.name, 'resolution': resolution.name});
       if (result == null) {
         throw FlutterError("Invalid result");
       }

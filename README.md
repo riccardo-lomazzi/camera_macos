@@ -5,6 +5,7 @@ Can take pictures and record videos, even with external cameras.
 
 ## Getting Started
 
+- [Setup](#setup)
 - [Basic usage](#basic-usage)
   - [Taking a picture](#taking-a-picture)
   - [Recording a video](#recording-a-video)
@@ -13,6 +14,25 @@ Can take pictures and record videos, even with external cameras.
 - [License](#license)
 
 ---
+
+## Setup
+
+In your project, add these two rows to the `macos/Runner/Info.plist` file:
+
+```plist
+<key>NSCameraUsageDescription</key>
+<string>your usage description here</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>your usage description here</string>
+```
+
+and these two rows in the `Debug.Entitlements` and `Release.Entitlements` files.
+```plist
+<key>com.apple.security.device.audio-input</key>
+<true/>
+<key>com.apple.security.device.camera</key>
+<true/>
+```
 
 ## Basic usage
 
@@ -81,13 +101,12 @@ You also have information about the camera object you've just created with the `
 
 Setting the focus point can be done with the ```setFocusPoint``` method.
 
-Note: the offset needs to be between 0 and 1.
-
 ``` dart
-CameraMacOSFile? file = await macOSController.setFocusPoint(cameraId,Offset(0.5,0.5));
-
-
+macOSController.setFocusPoint(cameraId, Offset(0.5,0.5));
 ```
+The `CameraMacOSView` widget enables it by default.
+
+Note: the offset needs to be between `0` and `1`.
 
 ### Taking a picture ###
 
@@ -106,12 +125,14 @@ if(file != null) {
 
 ### Streaming an Image ###
 
-Streaming an image can be done with the ```startImageStream``` method, and can be stopped with the ```stopImageStream```.
+Streaming an image can be done with the ```startImageStream``` method, and can be stopped with the ```stopImageStream``` method.
 
 ``` dart
-CameraMacOSFile? file = await macOSController.startImageStream((CameraImageData imageData){
+macOSController.startImageStream((CameraImageData imageData){
 //place your code here
 });
+
+macOSController.stopImageStream();
 
 ```
 
@@ -120,7 +141,7 @@ CameraMacOSFile? file = await macOSController.startImageStream((CameraImageData 
 Recording videos can be done with the ```recordVideo``` method, and can be stopped with the ```stopVideoRecording```.
 
 ``` dart
-await macOSController.recordVideo(
+macOSController.recordVideo(
     url: // get url from packages such as path_provider,
     maxVideoDuration: 30, // duration in seconds,
     onVideoRecordingFinished: (CameraMacOSFile? file, CameraMacOSException? exception) {
@@ -142,10 +163,10 @@ if(file != null) {
 
 You can enable or disable audio recording with the ```enableAudio``` flag.
 
-Default videos settings (currently locked) are:
-- max resolution available to the selected camera
-- default microphone format (```ac1```)
-- default video format (```mp4```)
+Default videos settings are:
+- max resolution available to the selected camera - can be changed by setting the `resolution` property
+- default microphone format (```ac1```) - currently locked
+- default video format (```mp4```) - can be changed by setting the `videoFormat` property
 
 You can set a maximum video duration (in seconds) for recording videos with ```maxVideoDuration```.
 A native timer will fire after time has passed, and will call the ```onVideoRecordingFinished``` method.
