@@ -55,7 +55,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var factory: CameraMacOSNativeFactory!
     var previewLayer: AVCaptureVideoPreviewLayer!
 
-    var pictureFormat:NSBitmapImageRep.FileType = NSBitmapImageRep.FileType.tiff
+    var pictureFormat:NSBitmapImageRep.FileType? = NSBitmapImageRep.FileType.tiff
     var videoFormat:AVFileType = AVFileType.mp4
     var vstring:String = "mp4"
 
@@ -119,13 +119,18 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             ] as [String:Any]);
         }
         
-//        if zoomLevel > 1.0{
-//            zoomCVPixelBuffer(latestBuffer)
-//            return Unmanaged<CVPixelBuffer>.passRetained(zoomPixelBuffer!)
-//        }
-//        else{
+        if zoomLevel > 1.0{
+            let width = CVPixelBufferGetWidth(latestBuffer)
+            let height = CVPixelBufferGetHeight(latestBuffer)
+            let size:CGSize = CGSize(width: Double(width)/zoomLevel, height: Double(height)/zoomLevel)
+            let x = (Double(width)-size.width)/2
+            let y = (Double(height)-size.height)/2
+            let rect = CGRect(x:x,y:y,width:size.width,height:size.height)
+            return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer.crop(to: rect)!)
+        }
+        else{
             return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
-//        }
+        }
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -319,6 +324,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         break
                     case "png":
                         self.pictureFormat = NSBitmapImageRep.FileType.png
+                        break
+                    case "raw":
+                        self.pictureFormat = nil
                         break
                     default:
                         self.pictureFormat = NSBitmapImageRep.FileType.tiff
@@ -531,22 +539,33 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         }
     }
     
-    func takePicture(_ result: @escaping FlutterResult, _ format: NSBitmapImageRep.FileType) {
-        guard let imageBuffer = latestBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer),
-                let imageData = nsImage.representation(
-                using: format,
-                properties: [
-                    NSBitmapImageRep.PropertyKey.currentFrame: NSBitmapImageRep.PropertyKey.currentFrame.self
-                ]
-            ), !imageData.isEmpty else {
-            result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil).toMap])
-            return
+    func takePicture(_ result: @escaping FlutterResult, _ format: NSBitmapImageRep.FileType?) {
+        if format != nil{
+            guard let imageBuffer = latestBuffer, let nsImage = imageFromSampleBuffer(imageBuffer: imageBuffer),
+                    let imageData = nsImage.representation(
+                    using: format!,
+                    properties: [
+                        NSBitmapImageRep.PropertyKey.currentFrame: NSBitmapImageRep.PropertyKey.currentFrame.self
+                    ]
+                ), !imageData.isEmpty else {
+                result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil).toMap])
+                return
+            }
+            result(["imageData": imageData, "error": nil])
         }
-        result(["imageData": imageData, "error": nil])
+        else{
+            let nsImage = imageFromSampleBuffer(imageBuffer: latestBuffer)
+            if nsImage != nil{
+                let imageData = Data(bytes: nsImage!.bitmapData!, count: Int(nsImage!.bytesPerRow*Int(nsImage!.size.height)))
+                result(["imageData": imageData, "error": nil])
+            }else {
+                result(["error": FlutterError(code: "PHOTO_OUTPUT_ERROR", message: "imageData is empty or invalid", details: nil).toMap])
+                return
+            }
+        }
     }
     
     func imageFromSampleBuffer(imageBuffer: CVPixelBuffer) -> NSBitmapImageRep? {
-        
         CVPixelBufferLockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
         
         guard let baseAddress: UnsafeMutableRawPointer = CVPixelBufferGetBaseAddress(imageBuffer) else {
@@ -611,67 +630,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
 
         return context.makeImage()
     }
-    /**
-     First crops the pixel buffer, then resizes it.
-     */
-    public func zoomCVPixelBuffer(_ srcPixelBuffer: CVPixelBuffer){
-        
-        CVPixelBufferLockBaseAddress(srcPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
-        guard let srcData = CVPixelBufferGetBaseAddress(srcPixelBuffer) else {
-            print("Error: could not get pixel buffer base address")
-            return
-        }
-        let srcBytesPerRow = CVPixelBufferGetBytesPerRow(srcPixelBuffer)
-        
-        let width = CVPixelBufferGetWidth(latestBuffer)
-        let height = CVPixelBufferGetHeight(latestBuffer)
-        let size:CGSize = CGSize(width: Double(width)/zoomLevel, height: Double(height)/zoomLevel)
-        let x = (Double(width)-size.width/zoomLevel)/2
-        let y = (Double(height)-size.height/zoomLevel)/2
-        let rect = CGRect(x:x,y:y,width:size.width/zoomLevel,height:size.height/zoomLevel)
-        
-        let offset = Int(y) * srcBytesPerRow + Int(x)*4
-        var srcBuffer = vImage_Buffer(data: srcData.advanced(by: offset),
-                                      height: vImagePixelCount(size.height),
-                                      width: vImagePixelCount(size.width),
-                                      rowBytes: srcBytesPerRow)
-        
-        let destBytesPerRow = width*4
-        guard let destData = malloc(height*destBytesPerRow) else {
-            print("Error: out of memory")
-            return
-        }
-        var destBuffer = vImage_Buffer(data: destData,
-                                       height: vImagePixelCount(height),
-                                       width: vImagePixelCount(width),
-                                       rowBytes: destBytesPerRow)
-        
-        let error = vImageScale_ARGB8888(&srcBuffer, &destBuffer, nil, vImage_Flags(0))
-        CVPixelBufferUnlockBaseAddress(srcPixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
-        if error != kvImageNoError {
-            print("Error:", error)
-            free(destData)
-            return
-        }
-        
-        let releaseCallback: CVPixelBufferReleaseBytesCallback = { _, ptr in
-            if let ptr = ptr {
-                free(UnsafeMutableRawPointer(mutating: ptr))
-            }
-        }
-        
-        let pixelFormat = CVPixelBufferGetPixelFormatType(srcPixelBuffer)
-        
-        let status = CVPixelBufferCreateWithBytes(nil, width, height,
-                                                  pixelFormat, destData,
-                                                  destBytesPerRow, releaseCallback,
-                                                  nil, nil, &zoomPixelBuffer)
-        if status != kCVReturnSuccess {
-            print("Error: could not create new pixel buffer")
-            free(destData)
-            return
-        }
-    }
+
     func zoomCGImage(_ image: CGImage) -> CGImage {
         let x = (resSize!.width-resSize!.width/zoomLevel)/2
         let y = (resSize!.height-resSize!.height/zoomLevel)/2
@@ -1041,4 +1000,103 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         savedResult(["videoData": videoData, "url": outputFileURL.absoluteURL.path, "error": nil] as [String:Any?])
     }
     
+}
+
+extension UnsafeMutableRawPointer {
+    // Converts the vImage buffer to CVPixelBuffer
+    func toCVPixelBuffer(pixelBuffer: CVPixelBuffer, targetWith: Int, targetHeight: Int, targetImageRowBytes: Int) -> CVPixelBuffer? {
+        let pixelBufferType = CVPixelBufferGetPixelFormatType(pixelBuffer)
+        let releaseCallBack: CVPixelBufferReleaseBytesCallback = {mutablePointer, pointer in
+            if let pointer = pointer {
+                free(UnsafeMutableRawPointer(mutating: pointer))
+            }
+        }
+
+        var targetPixelBuffer: CVPixelBuffer?
+        let conversionStatus = CVPixelBufferCreateWithBytes(nil, targetWith, targetHeight, pixelBufferType, self, targetImageRowBytes, releaseCallBack, nil, nil, &targetPixelBuffer)
+
+        guard conversionStatus == kCVReturnSuccess else {
+            free(self)
+            return nil
+        }
+
+        return targetPixelBuffer
+    }
+}
+
+extension CVImageBuffer {
+    func crop(to rect: CGRect) -> CVPixelBuffer? {
+        CVPixelBufferLockBaseAddress(self, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(self, .readOnly) }
+
+        guard let baseAddress = CVPixelBufferGetBaseAddress(self) else {
+            return nil
+        }
+
+        let inputImageRowBytes = CVPixelBufferGetBytesPerRow(self)
+
+        let imageChannels = 4
+        let startPos = Int(rect.origin.y) * inputImageRowBytes + imageChannels * Int(rect.origin.x)
+        let outWidth = UInt(rect.width)
+        let outHeight = UInt(rect.height)
+        let croppedImageRowBytes = Int(outWidth) * imageChannels
+
+        var inBuffer = vImage_Buffer()
+        inBuffer.height = outHeight
+        inBuffer.width = outWidth
+        inBuffer.rowBytes = inputImageRowBytes
+
+        inBuffer.data = baseAddress + UnsafeMutableRawPointer.Stride(startPos)
+
+        guard let croppedImageBytes = malloc(Int(outHeight) * croppedImageRowBytes) else {
+            return nil
+        }
+
+        var outBuffer = vImage_Buffer(data: croppedImageBytes, height: outHeight, width: outWidth, rowBytes: croppedImageRowBytes)
+
+        let scaleError = vImageScale_ARGB8888(&inBuffer, &outBuffer, nil, vImage_Flags(0))
+
+        guard scaleError == kvImageNoError else {
+            free(croppedImageBytes)
+            return nil
+        }
+
+        return croppedImageBytes.toCVPixelBuffer(pixelBuffer: self, targetWith: Int(outWidth), targetHeight: Int(outHeight), targetImageRowBytes: croppedImageRowBytes)
+    }
+    
+    func flip() -> CVPixelBuffer? {
+        CVPixelBufferLockBaseAddress(self, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(self, .readOnly) }
+
+        guard let baseAddress = CVPixelBufferGetBaseAddress(self) else {
+            return nil
+        }
+        
+        let width = UInt(CVPixelBufferGetWidth(self))
+        let height = UInt(CVPixelBufferGetHeight(self))
+        let inputImageRowBytes = CVPixelBufferGetBytesPerRow(self)
+        let outputImageRowBytes = inputImageRowBytes
+        
+        var inBuffer = vImage_Buffer(
+            data: baseAddress,
+            height: height,
+            width: width,
+            rowBytes: inputImageRowBytes)
+        
+        guard let targetImageBytes = malloc(Int(height) * outputImageRowBytes) else {
+            return nil
+        }
+        var outBuffer = vImage_Buffer(data: targetImageBytes, height: height, width: width, rowBytes: outputImageRowBytes)
+        
+        // See https://developer.apple.com/documentation/accelerate/vimage/vimage_operations/image_reflection for other transformations
+        let reflectError = vImageHorizontalReflect_ARGB8888(&inBuffer, &outBuffer, vImage_Flags(0))
+        // let reflectError = vImageVerticalReflect_ARGB8888(&inBuffer, &outBuffer, vImage_Flags(0))
+        
+        guard reflectError == kvImageNoError else {
+            free(targetImageBytes)
+            return nil
+        }
+
+        return targetImageBytes.toCVPixelBuffer(pixelBuffer: self, targetWith: Int(width), targetHeight: Int(height), targetImageRowBytes: outputImageRowBytes)
+    }
 }

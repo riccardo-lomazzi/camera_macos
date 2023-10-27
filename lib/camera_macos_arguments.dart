@@ -3,13 +3,13 @@ import 'dart:typed_data';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:flutter/material.dart';
 
-enum PictureFormat { jpg, jpeg, tiff, bmp, png }
+enum PictureFormat { jpg, jpeg, tiff, bmp, png, raw }
 
 enum VideoFormat { m4v, mov, mp4 }
 
-enum Tourch{ on, off, auto}
+enum Tourch{ on, off, auto }
 
-enum CameraMacOSMode { photo, video}
+enum CameraMacOSMode { photo, video }
 enum PictureResolution {
   /// 480p (640x480)
   low,
