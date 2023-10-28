@@ -121,7 +121,7 @@ The `CameraMacOSView` widget disables it by default.
 
 Setting the orientation to 0, 90, 180, or 270 can be done with the ```setOrientation``` method.
 
-Note: This feature for video is only available for osx 14.0 and up.
+Note: This feature for video is only available for macOS < 14.0 and Swift < 15.
 
 ``` dart
 macOSController.setOrientation(CameraOrientation.orientation0deg);

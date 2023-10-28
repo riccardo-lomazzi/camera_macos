@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:math';
-
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos_example/input_image.dart';
 import 'package:flutter/foundation.dart';
@@ -26,7 +24,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   String? selectedVideoDevice;
   PictureResolution selectedPictureResolution = PictureResolution.max;
   PictureFormat selectedPictureFormat = PictureFormat.tiff;
-  CameraOrientation selectedOrientation = CameraOrientation.orientation90deg;
+  CameraOrientation selectedOrientation = CameraOrientation.orientation0deg;
   VideoFormat selectedVideoFormat = VideoFormat.mp4;
   File? lastPictureTaken;
 

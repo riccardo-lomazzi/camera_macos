@@ -119,18 +119,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             ] as [String:Any]);
         }
         
-        if zoomLevel > 1.0{
-            let width = CVPixelBufferGetWidth(latestBuffer)
-            let height = CVPixelBufferGetHeight(latestBuffer)
-            let size:CGSize = CGSize(width: Double(width)/zoomLevel, height: Double(height)/zoomLevel)
-            let x = (Double(width)-size.width)/2
-            let y = (Double(height)-size.height)/2
-            let rect = CGRect(x:x,y:y,width:size.width,height:size.height)
-            return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer.crop(to: rect)!)
-        }
-        else{
-            return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
-        }
+        return Unmanaged<CVPixelBuffer>.passRetained(latestBuffer)
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -448,9 +437,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 if connection.isVideoMirroringSupported {
                                     connection.isVideoMirrored = true
                                 }
-                                if #available(macOS 14.0, *), connection.isVideoRotationAngleSupported(self.orientation){
-                                    connection.videoRotationAngle = self.orientation
-                                }
+                                #if compiler(<5.8.1)
+                                    if #available(macOS 14.0, *), connection.isVideoRotationAngleSupported(self.orientation){
+                                        connection.videoRotationAngle = self.orientation
+                                    }
+                                #endif
                             }
                             outputInitialized = true
                         }
@@ -465,9 +456,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 if connection.isVideoMirroringSupported {
                                     connection.isVideoMirrored = true
                                 }
-                                if #available(macOS 14.0, *), connection.isVideoRotationAngleSupported(self.orientation){
-                                    connection.videoRotationAngle = self.orientation
-                                }
+                                #if compiler(<5.8.1)
+                                    if #available(macOS 14.0, *) ,connection.isVideoRotationAngleSupported(self.orientation){
+                                        connection.videoRotationAngle = self.orientation
+                                    }
+                                #endif
                             }
                             outputInitialized = true
                         }
@@ -589,7 +582,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         )else {
             return nil
         }
-        context.rotate(by: self.orientation*Double.pi/180.0)
         let quartzImage = context.makeImage()!
         
         CVPixelBufferUnlockBaseAddress(imageBuffer, CVPixelBufferLockFlags(rawValue: 0))
@@ -1021,82 +1013,5 @@ extension UnsafeMutableRawPointer {
         }
 
         return targetPixelBuffer
-    }
-}
-
-extension CVImageBuffer {
-    func crop(to rect: CGRect) -> CVPixelBuffer? {
-        CVPixelBufferLockBaseAddress(self, .readOnly)
-        defer { CVPixelBufferUnlockBaseAddress(self, .readOnly) }
-
-        guard let baseAddress = CVPixelBufferGetBaseAddress(self) else {
-            return nil
-        }
-
-        let inputImageRowBytes = CVPixelBufferGetBytesPerRow(self)
-
-        let imageChannels = 4
-        let startPos = Int(rect.origin.y) * inputImageRowBytes + imageChannels * Int(rect.origin.x)
-        let outWidth = UInt(rect.width)
-        let outHeight = UInt(rect.height)
-        let croppedImageRowBytes = Int(outWidth) * imageChannels
-
-        var inBuffer = vImage_Buffer()
-        inBuffer.height = outHeight
-        inBuffer.width = outWidth
-        inBuffer.rowBytes = inputImageRowBytes
-
-        inBuffer.data = baseAddress + UnsafeMutableRawPointer.Stride(startPos)
-
-        guard let croppedImageBytes = malloc(Int(outHeight) * croppedImageRowBytes) else {
-            return nil
-        }
-
-        var outBuffer = vImage_Buffer(data: croppedImageBytes, height: outHeight, width: outWidth, rowBytes: croppedImageRowBytes)
-
-        let scaleError = vImageScale_ARGB8888(&inBuffer, &outBuffer, nil, vImage_Flags(0))
-
-        guard scaleError == kvImageNoError else {
-            free(croppedImageBytes)
-            return nil
-        }
-
-        return croppedImageBytes.toCVPixelBuffer(pixelBuffer: self, targetWith: Int(outWidth), targetHeight: Int(outHeight), targetImageRowBytes: croppedImageRowBytes)
-    }
-    
-    func flip() -> CVPixelBuffer? {
-        CVPixelBufferLockBaseAddress(self, .readOnly)
-        defer { CVPixelBufferUnlockBaseAddress(self, .readOnly) }
-
-        guard let baseAddress = CVPixelBufferGetBaseAddress(self) else {
-            return nil
-        }
-        
-        let width = UInt(CVPixelBufferGetWidth(self))
-        let height = UInt(CVPixelBufferGetHeight(self))
-        let inputImageRowBytes = CVPixelBufferGetBytesPerRow(self)
-        let outputImageRowBytes = inputImageRowBytes
-        
-        var inBuffer = vImage_Buffer(
-            data: baseAddress,
-            height: height,
-            width: width,
-            rowBytes: inputImageRowBytes)
-        
-        guard let targetImageBytes = malloc(Int(height) * outputImageRowBytes) else {
-            return nil
-        }
-        var outBuffer = vImage_Buffer(data: targetImageBytes, height: height, width: width, rowBytes: outputImageRowBytes)
-        
-        // See https://developer.apple.com/documentation/accelerate/vimage/vimage_operations/image_reflection for other transformations
-        let reflectError = vImageHorizontalReflect_ARGB8888(&inBuffer, &outBuffer, vImage_Flags(0))
-        // let reflectError = vImageVerticalReflect_ARGB8888(&inBuffer, &outBuffer, vImage_Flags(0))
-        
-        guard reflectError == kvImageNoError else {
-            free(targetImageBytes)
-            return nil
-        }
-
-        return targetImageBytes.toCVPixelBuffer(pixelBuffer: self, targetWith: Int(width), targetHeight: Int(height), targetImageRowBytes: outputImageRowBytes)
     }
 }
