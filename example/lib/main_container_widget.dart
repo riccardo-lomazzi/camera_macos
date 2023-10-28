@@ -23,9 +23,11 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   List<CameraMacOSDevice> videoDevices = [];
   String? selectedVideoDevice;
   PictureResolution selectedPictureResolution = PictureResolution.max;
+  AudioQuality selectedAudioQulaity = AudioQuality.min;
   PictureFormat selectedPictureFormat = PictureFormat.tiff;
   CameraOrientation selectedOrientation = CameraOrientation.orientation0deg;
   VideoFormat selectedVideoFormat = VideoFormat.mp4;
+  AudioFormat selectedAudioFormat = AudioFormat.kAudioFormatAppleLossless;
   File? lastPictureTaken;
 
   List<CameraMacOSDevice> audioDevices = [];
@@ -39,6 +41,8 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   CameraImageData? streamedImage;
 
   double zoom = 1.0;
+
+  List<DropdownMenuItem<String>> add = [];
 
   @override
   void initState() {
@@ -57,6 +61,15 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         }
       });
     });
+
+    for(int i = 0; i < AudioFormat.values.length;i++){
+      add.add(
+        DropdownMenuItem(
+          value: '$i',
+          child: Text(AudioFormat.values[i].name.replaceAll('kAudioFormat', '')),
+        )
+      );
+    }
   }
 
   String get cameraButtonText {
@@ -233,9 +246,11 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                         fit: BoxFit.fitWidth,
                                         cameraMode: CameraMacOSMode.photo,
                                         resolution: selectedPictureResolution,
+                                        audioQuality: selectedAudioQulaity,
                                         pictureFormat: selectedPictureFormat,
                                         orientation: selectedOrientation,
                                         videoFormat: selectedVideoFormat,
+                                        audioFormat: selectedAudioFormat,
                                         onCameraInizialized:
                                             (CameraMacOSController controller) {
                                           setState(() {
@@ -301,18 +316,20 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                     ),
                   ),
                   Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           "Camera Orientation",
                         ),
-                        Expanded(
-                        flex: 2,
+                        SizedBox(width: 10,),
+                        SizedBox(
+                        width:80,
                         child:DropdownButton<String>(
                           elevation: 3,
                           isExpanded: true,
                           value: selectedOrientation.index.toString(),
                           underline: Container(color: Colors.transparent),
+                          padding: EdgeInsets.only(left: 10),
                           items: [DropdownMenuItem(
                               value: '0',
                               child: Text('0'),
@@ -329,6 +346,148 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                           onChanged: (String? or) {
                             setState(() {
                               selectedOrientation = CameraOrientation.values[int.parse(or!)];
+                            });
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                  Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Picture Resolution",
+                        ),
+                        SizedBox(width: 10,),
+                        SizedBox(
+                        width:80,
+                        child:DropdownButton<String>(
+                          elevation: 3,
+                          isExpanded: true,
+                          value: selectedPictureResolution.index.toString(),
+                          underline: Container(color: Colors.transparent),
+                          padding: EdgeInsets.only(left: 10),
+                          items: [DropdownMenuItem(
+                              value: '0',
+                              child: Text('low'),
+                            ),DropdownMenuItem(
+                              value: '1',
+                              child: Text('medium'),
+                            ),DropdownMenuItem(
+                              value: '2',
+                              child: Text('high'),
+                            ),DropdownMenuItem(
+                              value: '3',
+                              child: Text('very high'),
+                            ),DropdownMenuItem(
+                              value: '4',
+                              child: Text('ultra high'),
+                            ),DropdownMenuItem(
+                              value: '5',
+                              child: Text('max'),
+                            )],
+                          onChanged: (String? or) {
+                            setState(() {
+                              selectedPictureResolution = PictureResolution.values[int.parse(or!)];
+                            });
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                  Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Audio Quality",
+                        ),
+                        SizedBox(width: 10,),
+                        SizedBox(
+                        width:80,
+                        child:DropdownButton<String>(
+                          elevation: 3,
+                          isExpanded: true,
+                          value: selectedAudioQulaity.index.toString(),
+                          underline: Container(color: Colors.transparent),
+                          padding: EdgeInsets.only(left: 10),
+                          items: [DropdownMenuItem(
+                              value: '0',
+                              child: Text('min'),
+                            ),DropdownMenuItem(
+                              value: '1',
+                              child: Text('low'),
+                            ),DropdownMenuItem(
+                              value: '2',
+                              child: Text('medium'),
+                            ),DropdownMenuItem(
+                              value: '3',
+                              child: Text('high'),
+                            ),DropdownMenuItem(
+                              value: '4',
+                              child: Text('max'),
+                            )],
+                          onChanged: (String? q) {
+                            setState(() {
+                              selectedAudioQulaity = AudioQuality.values[int.parse(q!)];
+                            });
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                  Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Video Format",
+                        ),
+                        SizedBox(width: 10,),
+                        SizedBox(
+                        width:80,
+                        child:DropdownButton<String>(
+                          elevation: 3,
+                          isExpanded: true,
+                          value: selectedVideoFormat.index.toString(),
+                          underline: Container(color: Colors.transparent),
+                          padding: EdgeInsets.only(left: 10),
+                          items: [DropdownMenuItem(
+                              value: '0',
+                              child: Text('mv4'),
+                            ),DropdownMenuItem(
+                              value: '1',
+                              child: Text('mov'),
+                            ),DropdownMenuItem(
+                              value: '2',
+                              child: Text('mp4'),
+                            )],
+                          onChanged: (String? q) {
+                            setState(() {
+                              selectedVideoFormat = VideoFormat.values[int.parse(q!)];
+                            });
+                          },
+                        ),
+                      )
+                    ],
+                  ),
+                  Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Audio Format",
+                        ),
+                        SizedBox(width: 10,),
+                        SizedBox(
+                        width:220,
+                        child:DropdownButton<String>(
+                          elevation: 3,
+                          isExpanded: true,
+                          value: selectedAudioFormat.index.toString(),
+                          underline: Container(color: Colors.transparent),
+                          padding: EdgeInsets.only(left: 10),
+                          items: add,
+                          onChanged: (String? q) {
+                            setState(() {
+                              selectedAudioFormat = AudioFormat.values[int.parse(q!)];
                             });
                           },
                         ),

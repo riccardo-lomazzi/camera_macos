@@ -62,6 +62,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     var resSize:NSSize? = nil
     var settingsAssistant:AVOutputSettingsAssistant? = nil
 
+    var audioQuality:AVAudioQuality = AVAudioQuality.max
+    var audioFormat:AudioFormatID = kAudioFormatAppleLossless
+
     var zoomLevel:Double = 1.0
     var zoomPixelBuffer: CVImageBuffer?
     
@@ -361,7 +364,69 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         self.settingsAssistant = AVOutputSettingsAssistant(preset: .preset1280x720)
                         break
                 }
+                switch arguments["quality"] as! String{
+                    case "min":
+                        self.audioQuality = AVAudioQuality.min
+                        break
+                    case "low":
+                        self.audioQuality = AVAudioQuality.low
+                        break
+                    case "medium":
+                        self.audioQuality = AVAudioQuality.medium
+                        break
+                    case "high":
+                        self.audioQuality = AVAudioQuality.high
+                        break
+                    default:
+                        self.audioQuality = AVAudioQuality.max
+                        break
+                }
+
+                let afids:[AudioFormatID] = [
+                    kAudioFormat60958AC3,
+                    kAudioFormatAC3,
+                    kAudioFormatAES3,
+                    kAudioFormatALaw,
+                    kAudioFormatAMR,
+                    kAudioFormatAMR_WB,
+                    kAudioFormatAppleIMA4,
+                    kAudioFormatAppleLossless,
+                    kAudioFormatAudible,
+                    kAudioFormatDVIIntelIMA,
+                    kAudioFormatEnhancedAC3,
+                    kAudioFormatFLAC,
+                    kAudioFormatLinearPCM,
+                    kAudioFormatMACE3,
+                    kAudioFormatMACE6,
+                    kAudioFormatMIDIStream,
+                    kAudioFormatMPEG4AAC,
+                    kAudioFormatMPEG4AAC_ELD,
+                    kAudioFormatMPEG4AAC_ELD_SBR,
+                    kAudioFormatMPEG4AAC_ELD_V2,
+                    kAudioFormatMPEG4AAC_HE,
+                    kAudioFormatMPEG4AAC_HE_V2,
+                    kAudioFormatMPEG4AAC_LD,
+                    kAudioFormatMPEG4AAC_Spatial,
+                    kAudioFormatMPEG4CELP,
+                    kAudioFormatMPEG4HVXC,
+                    kAudioFormatMPEG4TwinVQ,
+                    kAudioFormatMPEGD_USAC,
+                    kAudioFormatMPEGLayer1,
+                    kAudioFormatMPEGLayer2,
+                    kAudioFormatMPEGLayer3,
+                    kAudioFormatMicrosoftGSM,
+                    kAudioFormatOpus,
+                    kAudioFormatParameterValueStream,
+                    kAudioFormatQDesign,
+                    kAudioFormatQDesign2,
+                    kAudioFormatQUALCOMM,
+                    kAudioFormatTimeCode,
+                    kAudioFormatULaw,
+                    kAudioFormatiLBC,
+                ]
                 
+                self.audioFormat = afids[arguments["aformat"] as! Int]
+
                 guard let newCameraObject: AVCaptureDevice = newCameraObject else {
                     result(FlutterError(code: "CAMERA_INITIALIZATION_ERROR", message: "Could not find a suitable camera on this device", details: nil).toFlutterResult)
                     return
@@ -715,7 +780,6 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         if let settingsAssistant = self.settingsAssistant, let videoSettings = settingsAssistant.videoSettings, videoWriter.canApply(outputSettings: videoSettings, forMediaType: .video) {
                             videoWriterVideoInputSettings = videoSettings
                         }
-
                         
                         let videoWriterVideoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoWriterVideoInputSettings)
                         videoWriterVideoInput.expectsMediaDataInRealTime = true
@@ -727,10 +791,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                         // Add Video Writer Audio Input
                         if self.enableAudio {
                             var videoWriterAudioInputSettings : [String : Any] = [
-                                AVFormatIDKey : kAudioFormatMPEG4AAC,
+                                AVFormatIDKey : self.audioFormat,
                                 AVSampleRateKey : 44100,
                                 AVEncoderBitRateKey : 64000,
-                                AVNumberOfChannelsKey: 1
+                                AVNumberOfChannelsKey: 1,
+                                AVEncoderAudioQualityKey: self.audioQuality
                             ]
                             
                             if let settingsAssistant = self.settingsAssistant, let audioSettings = settingsAssistant.audioSettings, videoWriter.canApply(outputSettings: audioSettings, forMediaType: .audio) {

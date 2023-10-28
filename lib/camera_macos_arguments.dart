@@ -10,6 +10,52 @@ enum VideoFormat { m4v, mov, mp4 }
 enum Tourch{ on, off, auto }
 
 enum CameraMacOSMode { photo, video }
+
+enum AudioQuality { min, low, medium, high, max }
+
+enum AudioFormat {
+  kAudioFormat60958AC3,
+  kAudioFormatAC3,
+  kAudioFormatAES3,
+  kAudioFormatALaw,
+  kAudioFormatAMR,
+  kAudioFormatAMR_WB,
+  kAudioFormatAppleIMA4,
+  kAudioFormatAppleLossless,
+  kAudioFormatAudible,
+  kAudioFormatDVIIntelIMA,
+  kAudioFormatEnhancedAC3,
+  kAudioFormatFLAC,
+  kAudioFormatLinearPCM,
+  kAudioFormatMACE3,
+  kAudioFormatMACE6,
+  kAudioFormatMIDIStream,
+  kAudioFormatMPEG4AAC,
+  kAudioFormatMPEG4AAC_ELD,
+  kAudioFormatMPEG4AAC_ELD_SBR,
+  kAudioFormatMPEG4AAC_ELD_V2,
+  kAudioFormatMPEG4AAC_HE,
+  kAudioFormatMPEG4AAC_HE_V2,
+  kAudioFormatMPEG4AAC_LD,
+  kAudioFormatMPEG4AAC_Spatial,
+  kAudioFormatMPEG4CELP,
+  kAudioFormatMPEG4HVXC,
+  kAudioFormatMPEG4TwinVQ,
+  kAudioFormatMPEGD_USAC,
+  kAudioFormatMPEGLayer1,
+  kAudioFormatMPEGLayer2,
+  kAudioFormatMPEGLayer3,
+  kAudioFormatMicrosoftGSM,
+  kAudioFormatOpus,
+  kAudioFormatParameterValueStream,
+  kAudioFormatQDesign,
+  kAudioFormatQDesign2,
+  kAudioFormatQUALCOMM,
+  kAudioFormatTimeCode,
+  kAudioFormatULaw,
+  kAudioFormatiLBC,
+}
+
 enum PictureResolution {
   /// 480p (640x480)
   low,

@@ -78,6 +78,11 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     /// Enable Audio Recording
     bool enableAudio = true,
 
+    /// Change the videos audio format type
+    AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
+
+    AudioQuality audioQuality = AudioQuality.max,
+
     /// Enable light
     Tourch toggleTourch = Tourch.off,
 
@@ -94,10 +99,12 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           "type": cameraMacOSMode.index,
           "enableAudio": enableAudio,
           'resolution': resolution.name,
+          'quality': audioQuality.name,
           'orientation': orientation.index*90.0,
           'tourch': toggleTourch.index,
           'pformat': pictureFormat.name,
-          'vformat': videoFormat.name
+          'vformat': videoFormat.name,
+          'aformat': audioFormat.index,
         },
       );
       if (result == null) {

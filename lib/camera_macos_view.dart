@@ -43,6 +43,12 @@ class CameraMacOSView extends StatefulWidget {
   /// Resolution of the output video/image
   final PictureResolution resolution;
 
+  /// Format of the audion the video
+  final AudioFormat audioFormat;
+
+  /// Quality of the output audio
+  final AudioQuality audioQuality;
+
   /// Turn the light on the device on
   final Tourch toggleTourch;
 
@@ -61,8 +67,10 @@ class CameraMacOSView extends StatefulWidget {
     this.onCameraDestroyed,
     this.usePlatformView = false,
     this.resolution = PictureResolution.max,
+    this.audioQuality = AudioQuality.max,
     this.pictureFormat = PictureFormat.tiff,
     this.videoFormat = VideoFormat.mp4,
+    this.audioFormat = AudioFormat.kAudioFormatAppleLossless,
     this.toggleTourch = Tourch.off,
     this.orientation = CameraOrientation.orientation0deg
   }) : super(key: key);
@@ -84,7 +92,9 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
       cameraMacOSMode: widget.cameraMode,
       enableAudio: widget.enableAudio,
       resolution: widget.resolution,
+      audioQuality: widget.audioQuality,
       videoFormat: widget.videoFormat,
+      audioFormat: widget.audioFormat,
       pictureFormat: widget.pictureFormat,
       toggleTourch: widget.toggleTourch,
       orientation: widget.orientation
@@ -189,10 +199,11 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         oldWidget.enableAudio != widget.enableAudio ||
         oldWidget.toggleTourch != widget.toggleTourch ||
         oldWidget.resolution != widget.resolution ||
+        oldWidget.audioQuality != widget.audioQuality ||
         oldWidget.videoFormat != widget.videoFormat ||
+        oldWidget.audioFormat != widget.audioFormat ||
         oldWidget.pictureFormat != widget.pictureFormat ||
         oldWidget.usePlatformView != widget.usePlatformView ||
-        oldWidget.pictureFormat != widget.pictureFormat ||
         oldWidget.orientation != widget.orientation ||
         oldWidget.videoFormat != widget.videoFormat ||
         oldWidget.key != widget.key) {
@@ -203,8 +214,10 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         cameraMacOSMode: widget.cameraMode,
         enableAudio: widget.enableAudio,
         resolution: widget.resolution,
+        audioQuality: widget.audioQuality,
         pictureFormat: widget.pictureFormat,
         videoFormat: widget.videoFormat,
+        audioFormat: widget.audioFormat,
         toggleTourch: widget.toggleTourch,
         orientation: widget.orientation
       )

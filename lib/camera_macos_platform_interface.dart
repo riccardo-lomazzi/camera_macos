@@ -34,6 +34,8 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     PictureFormat pictureFormat = PictureFormat.tiff,
     VideoFormat videoFormat = VideoFormat.mp4,
     PictureResolution resolution = PictureResolution.max,
+    AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
+    AudioQuality audioQuality = AudioQuality.max,
     Tourch toggleTourch = Tourch.off,
     CameraOrientation orientation = CameraOrientation.orientation0deg,
     required CameraMacOSMode cameraMacOSMode,

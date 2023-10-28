@@ -121,7 +121,7 @@ The `CameraMacOSView` widget disables it by default.
 
 Setting the orientation to 0, 90, 180, or 270 can be done with the ```setOrientation``` method.
 
-Note: This feature for video is only available for macOS < 14.0 and Swift < 15.
+Note: This feature for is only available for macOS < 14.0 and Swift < 15.
 
 ``` dart
 macOSController.setOrientation(CameraOrientation.orientation0deg);
@@ -198,7 +198,8 @@ You can enable or disable audio recording with the ```enableAudio``` flag.
 
 Default videos settings are:
 - max resolution available to the selected camera - can be changed by setting the `resolution` property
-- default microphone format (```ac1```) - currently locked
+- max audio quality available to the selected video - can be changed by setting the `audioQuality` property
+- default microphone codec (```apple lossless```) - can be changed by setting the `audioFormat` property
 - default video format (```mp4```) - can be changed by setting the `videoFormat` property
 
 You can set a maximum video duration (in seconds) for recording videos with ```maxVideoDuration```.
@@ -218,10 +219,10 @@ After a video or a picture is taken, a ```CameraMacOSFile``` object is generated
 
 - The package supports ```macOS 10.11``` and onwards.
 - The plugin is just a temporary substitutive package for the official Flutter team's ```camera``` package. It will work only on ```macOS```.
+- Orientation is only available for macOS < 14.0 and Swift < 15.
 - Zoom is currently unsupported
 
 ## Future developments
-- Being able to change the audio quality
 - Zoom for video and texture
 
 ## License
