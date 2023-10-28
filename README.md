@@ -40,7 +40,7 @@ Integrate ```CameraMacOSView``` in your widget tree.
 You can choose a ```BoxFit``` method and a ```CameraMacOSMode``` (```photo``` or ```video```).
 When the camera is initialized, a ```CameraMacOSController``` object is created and can be used to do basic things such as taking pictures and recording videos.
 
-```
+``` dart
 final GlobalKey cameraKey = GlobalKey("cameraKey");
 late CameraMacOSController macOSController;
 
@@ -63,7 +63,7 @@ CameraMacOSView(
 The package supports external cameras too, not just the main Mac camera: you can specify an optional ```deviceId``` for the camera and an optional ```audioDeviceId``` for the microphone.
 Both IDs are related to the ```uniqueID``` property of ```AVCaptureDevice```, and can be obtained with the ```listDevices``` method.
 
-```
+``` dart
 String? deviceId;
 String? audioDeviceId;
 
