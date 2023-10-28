@@ -3,6 +3,8 @@
 * Added ability to turn light on or off
 * Added ability to change camera orientation
 * Added ability to zoom on imageStream
+* Added ability to change audio quality
+* Added ability to chande audio codec
 * Removed deviceId requirment from setFocusPoint
 ## 0.0.7+2
 * Updated README.md
