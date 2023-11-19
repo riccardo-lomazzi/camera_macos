@@ -139,7 +139,7 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             initCamera(arguments, result)
         case "takePicture":
             takePicture(result,pictureFormat)
-        case "toggleTourch":
+        case "toggleTorch":
             let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
             toggleTorch(arguments, result)
         case "startRecording":
@@ -434,8 +434,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 self.videoDevice = newCameraObject
                 do {
                     let focusPoint: CGPoint = .init(x: 0.5, y: 0.5)
-                    let ti = arguments["tourch"] as? Int
-                    let tourch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
+                    let ti = arguments["torch"] as? Int
+                    let torch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
                     try newCameraObject.lockForConfiguration()
                     if newCameraObject.isFocusModeSupported(.autoFocus) {
                         newCameraObject.focusMode = .autoFocus
@@ -449,8 +449,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     if newCameraObject.isExposurePointOfInterestSupported {
                         newCameraObject.exposurePointOfInterest = focusPoint
                     }
-                    if newCameraObject.isTorchModeSupported(tourch){
-                        newCameraObject.torchMode = tourch
+                    if newCameraObject.isTorchModeSupported(torch){
+                        newCameraObject.torchMode = torch
                     }
                     newCameraObject.unlockForConfiguration()
                     
@@ -502,11 +502,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 if connection.isVideoMirroringSupported {
                                     connection.isVideoMirrored = true
                                 }
-                                #if compiler(<5.8.1)
+//                                #if compiler(<5.8.1)
                                     if #available(macOS 14.0, *), connection.isVideoRotationAngleSupported(self.orientation){
                                         connection.videoRotationAngle = self.orientation
                                     }
-                                #endif
+//                                #endif
                             }
                             outputInitialized = true
                         }
@@ -521,11 +521,11 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                                 if connection.isVideoMirroringSupported {
                                     connection.isVideoMirrored = true
                                 }
-                                #if compiler(<5.8.1)
-                                    if #available(macOS 14.0, *) ,connection.isVideoRotationAngleSupported(self.orientation){
+//                                #if compiler(<5.8.1)
+                                if #available(macOS 14.0, *),  connection.isVideoRotationAngleSupported(self.orientation){
                                         connection.videoRotationAngle = self.orientation
                                     }
-                                #endif
+//                                #endif
                             }
                             outputInitialized = true
                         }
@@ -696,10 +696,10 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
     }
 
     func toggleTorch(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
-        let ti = arguments["tourch"] as? Int
-        let tourch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
-        if videoDevice.isTorchModeSupported(tourch){
-            videoDevice.torchMode = tourch
+        let ti = arguments["torch"] as? Int
+        let torch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
+        if videoDevice.isTorchModeSupported(torch){
+            videoDevice.torchMode = torch
             videoDevice.unlockForConfiguration()
             
             result(nil)

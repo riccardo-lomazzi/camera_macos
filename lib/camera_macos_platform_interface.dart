@@ -36,7 +36,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     PictureResolution resolution = PictureResolution.max,
     AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
     AudioQuality audioQuality = AudioQuality.max,
-    Tourch toggleTourch = Tourch.off,
+    Torch toggleTorch = Torch.off,
     CameraOrientation orientation = CameraOrientation.orientation0deg,
     required CameraMacOSMode cameraMacOSMode,
   }) {
@@ -86,7 +86,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<void> toggleTourch(Tourch tourch) {
+  Future<void> toggleTorch(Torch torch) {
     throw UnimplementedError("");
   }
 

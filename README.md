@@ -108,12 +108,12 @@ The `CameraMacOSView` widget enables it by default.
 
 Note: the offset needs to be between `0` and `1`.
 
-### Toggling Tourch ###
+### Toggling Torch ###
 
-Setting the tourch to on, off, or auto can be done with the ```toggleTourch``` method.
+Setting the torch to on, off, or auto can be done with the ```toggleTorch``` method.
 
 ``` dart
-macOSController.toggleTourch(Tourch.on);
+macOSController.toggleTorch(Torch.on);
 ```
 The `CameraMacOSView` widget disables it by default.
 
@@ -130,9 +130,9 @@ The `CameraMacOSView` widget defaults to 0.
 
 ### Setting Zoom ###
 
-Setting the zoom from 1 - inifity can be done with the ```setZoomLevel``` method.
+WARNING: This feature is only available for ```imageStream``` right now.
 
-Note: This feature is only available for imageStream right now.
+Setting the zoom from 1 - inifity can be done with the ```setZoomLevel``` method.
 
 ``` dart
 macOSController.setZoomLevel(1.0);

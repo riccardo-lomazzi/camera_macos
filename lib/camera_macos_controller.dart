@@ -50,8 +50,8 @@ class CameraMacOSController {
   }
 
   /// Turn light on
-  Future<void> toggleTourch(Tourch tourch) async{
-    _platformInstance.toggleTourch(tourch);
+  Future<void> toggleTorch(Torch torch) async {
+    _platformInstance.toggleTorch(torch);
   }
 
   /// Stream current argb image
@@ -66,15 +66,15 @@ class CameraMacOSController {
   }
 
   /// Set a new focus point in the image
-  Future<void> setFocusPoint(Offset point) async{
+  Future<void> setFocusPoint(Offset point) async {
     _platformInstance.setFocusPoint(point);
   }
 
-  Future<void> setZoomLevel(double zoom) async{
+  Future<void> setZoomLevel(double zoom) async {
     _platformInstance.setZoomLevel(zoom);
   }
 
-  Future<void> setOrientation(CameraOrientation orientation) async{
+  Future<void> setOrientation(CameraOrientation orientation) async {
     _platformInstance.setOrientation(orientation);
   }
 

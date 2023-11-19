@@ -34,7 +34,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   String? selectedAudioDevice;
 
   bool enableAudio = true;
-  bool enableTourch = false;
+  bool enableTorch = false;
   bool usePlatformView = false;
   bool streamImage = false;
 
@@ -62,13 +62,11 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
       });
     });
 
-    for(int i = 0; i < AudioFormat.values.length;i++){
-      add.add(
-        DropdownMenuItem(
-          value: '$i',
-          child: Text(AudioFormat.values[i].name.replaceAll('kAudioFormat', '')),
-        )
-      );
+    for (int i = 0; i < AudioFormat.values.length; i++) {
+      add.add(DropdownMenuItem(
+        value: '$i',
+        child: Text(AudioFormat.values[i].name.replaceAll('kAudioFormat', '')),
+      ));
     }
   }
 
@@ -105,170 +103,187 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         title: const Text('Camera MacOS Example'),
       ),
       body: SizedBox(
-        width: size.width,
-        height: size.height,
-        child: ListView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Video Devices",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
+          width: size.width,
+          height: size.height,
+          child: ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Video Devices",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: DropdownButton<String>(
-                                elevation: 3,
-                                isExpanded: true,
-                                value: selectedVideoDevice,
-                                underline: Container(color: Colors.transparent),
-                                items: videoDevices
-                                    .map((CameraMacOSDevice device) {
-                                  return DropdownMenuItem(
-                                    value: device.deviceId,
-                                    child: Text(device.deviceId),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newDeviceID) {
-                                  setState(() {
-                                    selectedVideoDevice = newDeviceID;
-                                  });
-                                },
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: DropdownButton<String>(
+                                  elevation: 3,
+                                  isExpanded: true,
+                                  value: selectedVideoDevice,
+                                  underline:
+                                      Container(color: Colors.transparent),
+                                  items: videoDevices
+                                      .map((CameraMacOSDevice device) {
+                                    return DropdownMenuItem(
+                                      value: device.deviceId,
+                                      child: Text(device.deviceId),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newDeviceID) {
+                                    setState(() {
+                                      selectedVideoDevice = newDeviceID;
+                                    });
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                          MaterialButton(
-                            color: Colors.lightBlue,
-                            textColor: Colors.white,
-                            child: Text("List video devices"),
-                            onPressed: listVideoDevices,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Divider(),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Audio Devices",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
+                            MaterialButton(
+                              color: Colors.lightBlue,
+                              textColor: Colors.white,
+                              child: Text("List video devices"),
+                              onPressed: listVideoDevices,
+                            ),
+                          ],
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: DropdownButton<String>(
-                                elevation: 3,
-                                isExpanded: true,
-                                value: selectedAudioDevice,
-                                underline: Container(color: Colors.transparent),
-                                items: audioDevices
-                                    .map((CameraMacOSDevice device) {
-                                  return DropdownMenuItem(
-                                    value: device.deviceId,
-                                    child: Text(device.deviceId),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newDeviceID) {
-                                  setState(() {
-                                    selectedAudioDevice = newDeviceID;
-                                  });
-                                },
+                      ],
+                    ),
+                    Divider(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Audio Devices",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: DropdownButton<String>(
+                                  elevation: 3,
+                                  isExpanded: true,
+                                  value: selectedAudioDevice,
+                                  underline:
+                                      Container(color: Colors.transparent),
+                                  items: audioDevices
+                                      .map((CameraMacOSDevice device) {
+                                    return DropdownMenuItem(
+                                      value: device.deviceId,
+                                      child: Text(device.deviceId),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newDeviceID) {
+                                    setState(() {
+                                      selectedAudioDevice = newDeviceID;
+                                    });
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                          MaterialButton(
-                            color: Colors.lightBlue,
-                            textColor: Colors.white,
-                            child: Text("List audio devices"),
-                            onPressed: listAudioDevices,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Divider(),
-                  Stack(
+                            MaterialButton(
+                              color: Colors.lightBlue,
+                              textColor: Colors.white,
+                              child: Text("List audio devices"),
+                              onPressed: listAudioDevices,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Divider(),
+                    Stack(
                       alignment: Alignment.bottomRight,
                       children: [
                         selectedVideoDevice != null &&
                                 selectedVideoDevice!.isNotEmpty
                             ? SizedBox(
-                              width: (size.width-24),
-                              height: (size.width-24)*(9/16),
-                              child: GestureDetector(
-                                onTapDown: (t){
-                                  macOSController?.setFocusPoint(Offset(t.localPosition.dx/(size.width-24), t.localPosition.dy/((size.width-24)*(9/16))));
-                                },
-                                child: Stack(
-                                  alignment: Alignment.topLeft,
-                                  children: [
-                                    Positioned(
-                                      left:0,
-                                      child:SizedBox(
-                                        height: (size.width-24)*(9/16),
-                                        child: RotatedBox(
-                                        quarterTurns: 1,
-                                          child: Slider(
-                                            activeColor: Colors.red,
-                                            value: zoom,
-                                            min: 1.0,
-                                            max: 8.0,
-                                            onChanged: (value) {
-                                              macOSController?.setZoomLevel(value);
-                                              setState(() => zoom = value);
-                                            },
-                                          )
-                                        )
-                                      )
-                                    ),
-                                    Container(
-                                      margin: EdgeInsets.only(left:40),
-                                      child: CameraMacOSView(
-                                        key: cameraKey,
-                                        deviceId: selectedVideoDevice,
-                                        audioDeviceId: selectedAudioDevice,
-                                        fit: BoxFit.fitWidth,
-                                        cameraMode: CameraMacOSMode.photo,
-                                        resolution: selectedPictureResolution,
-                                        audioQuality: selectedAudioQulaity,
-                                        pictureFormat: selectedPictureFormat,
-                                        orientation: selectedOrientation,
-                                        videoFormat: selectedVideoFormat,
-                                        audioFormat: selectedAudioFormat,
-                                        onCameraInizialized:
-                                            (CameraMacOSController controller) {
-                                          setState(() {
-                                            macOSController = controller;
-                                          });
-                                        },
-                                        onCameraDestroyed: () {
-                                          return Text("Camera Destroyed!");
-                                        },
-                                        toggleTourch: enableTourch?Tourch.on:Tourch.off,
-                                        enableAudio: enableAudio,
-                                        usePlatformView: usePlatformView,
-                                      )
-                                    )
-                                  ]
-                                )
-                              )
-                            )
+                                width: (size.width - 24),
+                                height: (size.width - 24) * (9 / 16),
+                                child: GestureDetector(
+                                    onTapDown: (t) {
+                                      macOSController?.setFocusPoint(Offset(
+                                          t.localPosition.dx /
+                                              (size.width - 24),
+                                          t.localPosition.dy /
+                                              ((size.width - 24) * (9 / 16))));
+                                    },
+                                    child: Stack(
+                                        alignment: Alignment.topLeft,
+                                        children: [
+                                          Positioned(
+                                              left: 0,
+                                              child: SizedBox(
+                                                  height: (size.width - 24) *
+                                                      (9 / 16),
+                                                  child: RotatedBox(
+                                                      quarterTurns: 1,
+                                                      child: Slider(
+                                                        activeColor: Colors.red,
+                                                        value: zoom,
+                                                        min: 1.0,
+                                                        max: 8.0,
+                                                        onChanged: (value) {
+                                                          macOSController
+                                                              ?.setZoomLevel(
+                                                                  value);
+                                                          setState(() =>
+                                                              zoom = value);
+                                                        },
+                                                      )))),
+                                          Container(
+                                              margin: EdgeInsets.only(left: 40),
+                                              child: CameraMacOSView(
+                                                key: cameraKey,
+                                                deviceId: selectedVideoDevice,
+                                                audioDeviceId:
+                                                    selectedAudioDevice,
+                                                fit: BoxFit.fitWidth,
+                                                cameraMode:
+                                                    CameraMacOSMode.photo,
+                                                resolution:
+                                                    selectedPictureResolution,
+                                                audioQuality:
+                                                    selectedAudioQulaity,
+                                                pictureFormat:
+                                                    selectedPictureFormat,
+                                                orientation:
+                                                    selectedOrientation,
+                                                videoFormat:
+                                                    selectedVideoFormat,
+                                                audioFormat:
+                                                    selectedAudioFormat,
+                                                onCameraInizialized:
+                                                    (CameraMacOSController
+                                                        controller) {
+                                                  setState(() {
+                                                    macOSController =
+                                                        controller;
+                                                  });
+                                                },
+                                                onCameraDestroyed: () {
+                                                  return Text(
+                                                      "Camera Destroyed!");
+                                                },
+                                                toggleTorch: enableTorch
+                                                    ? Torch.on
+                                                    : Torch.off,
+                                                enableAudio: enableAudio,
+                                                usePlatformView:
+                                                    usePlatformView,
+                                              ))
+                                        ])))
                             : Center(
                                 child: Text("Tap on List Devices first"),
                               ),
@@ -295,369 +310,414 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                             : const SizedBox.shrink(),
                       ],
                     ),
-                    SizedBox(height: 10,),
-                  if(streamedImage != null)SizedBox(
-                    width: (size.width-24),
-                    height: (size.width-24)*(9/16),
-                    child: Image.memory(argb2bitmap(streamedImage!).bytes)
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Settings",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                    SizedBox(
+                      height: 10,
                     ),
-                  ),
-                  Row(
+                    if (streamedImage != null)
+                      SizedBox(
+                          width: (size.width - 24),
+                          height: (size.width - 24) * (9 / 16),
+                          child:
+                              Image.memory(argb2bitmap(streamedImage!).bytes)),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Settings",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           "Camera Orientation",
                         ),
-                        SizedBox(width: 10,),
                         SizedBox(
-                        width:80,
-                        child:DropdownButton<String>(
-                          elevation: 3,
-                          isExpanded: true,
-                          value: selectedOrientation.index.toString(),
-                          underline: Container(color: Colors.transparent),
-                          padding: EdgeInsets.only(left: 10),
-                          items: [DropdownMenuItem(
-                              value: '0',
-                              child: Text('0'),
-                            ),DropdownMenuItem(
-                              value: '1',
-                              child: Text('90'),
-                            ),DropdownMenuItem(
-                              value: '2',
-                              child: Text('180'),
-                            ),DropdownMenuItem(
-                              value: '3',
-                              child: Text('270'),
-                            )],
-                          onChanged: (String? or) {
-                            setState(() {
-                              selectedOrientation = CameraOrientation.values[int.parse(or!)];
-                            });
-                          },
+                          width: 10,
                         ),
-                      )
-                    ],
-                  ),
-                  Row(
+                        SizedBox(
+                          width: 80,
+                          child: DropdownButton<String>(
+                            elevation: 3,
+                            isExpanded: true,
+                            value: selectedOrientation.index.toString(),
+                            underline: Container(color: Colors.transparent),
+                            padding: EdgeInsets.only(left: 10),
+                            items: [
+                              DropdownMenuItem(
+                                value: '0',
+                                child: Text('0'),
+                              ),
+                              DropdownMenuItem(
+                                value: '1',
+                                child: Text('90'),
+                              ),
+                              DropdownMenuItem(
+                                value: '2',
+                                child: Text('180'),
+                              ),
+                              DropdownMenuItem(
+                                value: '3',
+                                child: Text('270'),
+                              )
+                            ],
+                            onChanged: (String? or) {
+                              setState(() {
+                                selectedOrientation =
+                                    CameraOrientation.values[int.parse(or!)];
+                              });
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           "Picture Resolution",
                         ),
-                        SizedBox(width: 10,),
                         SizedBox(
-                        width:80,
-                        child:DropdownButton<String>(
-                          elevation: 3,
-                          isExpanded: true,
-                          value: selectedPictureResolution.index.toString(),
-                          underline: Container(color: Colors.transparent),
-                          padding: EdgeInsets.only(left: 10),
-                          items: [DropdownMenuItem(
-                              value: '0',
-                              child: Text('low'),
-                            ),DropdownMenuItem(
-                              value: '1',
-                              child: Text('medium'),
-                            ),DropdownMenuItem(
-                              value: '2',
-                              child: Text('high'),
-                            ),DropdownMenuItem(
-                              value: '3',
-                              child: Text('very high'),
-                            ),DropdownMenuItem(
-                              value: '4',
-                              child: Text('ultra high'),
-                            ),DropdownMenuItem(
-                              value: '5',
-                              child: Text('max'),
-                            )],
-                          onChanged: (String? or) {
-                            setState(() {
-                              selectedPictureResolution = PictureResolution.values[int.parse(or!)];
-                            });
-                          },
+                          width: 10,
                         ),
-                      )
-                    ],
-                  ),
-                  Row(
+                        SizedBox(
+                          width: 80,
+                          child: DropdownButton<String>(
+                            elevation: 3,
+                            isExpanded: true,
+                            value: selectedPictureResolution.index.toString(),
+                            underline: Container(color: Colors.transparent),
+                            padding: EdgeInsets.only(left: 10),
+                            items: [
+                              DropdownMenuItem(
+                                value: '0',
+                                child: Text('low'),
+                              ),
+                              DropdownMenuItem(
+                                value: '1',
+                                child: Text('medium'),
+                              ),
+                              DropdownMenuItem(
+                                value: '2',
+                                child: Text('high'),
+                              ),
+                              DropdownMenuItem(
+                                value: '3',
+                                child: Text('very high'),
+                              ),
+                              DropdownMenuItem(
+                                value: '4',
+                                child: Text('ultra high'),
+                              ),
+                              DropdownMenuItem(
+                                value: '5',
+                                child: Text('max'),
+                              )
+                            ],
+                            onChanged: (String? or) {
+                              setState(() {
+                                selectedPictureResolution =
+                                    PictureResolution.values[int.parse(or!)];
+                              });
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           "Audio Quality",
                         ),
-                        SizedBox(width: 10,),
                         SizedBox(
-                        width:80,
-                        child:DropdownButton<String>(
-                          elevation: 3,
-                          isExpanded: true,
-                          value: selectedAudioQulaity.index.toString(),
-                          underline: Container(color: Colors.transparent),
-                          padding: EdgeInsets.only(left: 10),
-                          items: [DropdownMenuItem(
-                              value: '0',
-                              child: Text('min'),
-                            ),DropdownMenuItem(
-                              value: '1',
-                              child: Text('low'),
-                            ),DropdownMenuItem(
-                              value: '2',
-                              child: Text('medium'),
-                            ),DropdownMenuItem(
-                              value: '3',
-                              child: Text('high'),
-                            ),DropdownMenuItem(
-                              value: '4',
-                              child: Text('max'),
-                            )],
-                          onChanged: (String? q) {
-                            setState(() {
-                              selectedAudioQulaity = AudioQuality.values[int.parse(q!)];
-                            });
-                          },
+                          width: 10,
                         ),
-                      )
-                    ],
-                  ),
-                  Row(
+                        SizedBox(
+                          width: 80,
+                          child: DropdownButton<String>(
+                            elevation: 3,
+                            isExpanded: true,
+                            value: selectedAudioQulaity.index.toString(),
+                            underline: Container(color: Colors.transparent),
+                            padding: EdgeInsets.only(left: 10),
+                            items: [
+                              DropdownMenuItem(
+                                value: '0',
+                                child: Text('min'),
+                              ),
+                              DropdownMenuItem(
+                                value: '1',
+                                child: Text('low'),
+                              ),
+                              DropdownMenuItem(
+                                value: '2',
+                                child: Text('medium'),
+                              ),
+                              DropdownMenuItem(
+                                value: '3',
+                                child: Text('high'),
+                              ),
+                              DropdownMenuItem(
+                                value: '4',
+                                child: Text('max'),
+                              )
+                            ],
+                            onChanged: (String? q) {
+                              setState(() {
+                                selectedAudioQulaity =
+                                    AudioQuality.values[int.parse(q!)];
+                              });
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           "Video Format",
                         ),
-                        SizedBox(width: 10,),
                         SizedBox(
-                        width:80,
-                        child:DropdownButton<String>(
-                          elevation: 3,
-                          isExpanded: true,
-                          value: selectedVideoFormat.index.toString(),
-                          underline: Container(color: Colors.transparent),
-                          padding: EdgeInsets.only(left: 10),
-                          items: [DropdownMenuItem(
-                              value: '0',
-                              child: Text('mv4'),
-                            ),DropdownMenuItem(
-                              value: '1',
-                              child: Text('mov'),
-                            ),DropdownMenuItem(
-                              value: '2',
-                              child: Text('mp4'),
-                            )],
-                          onChanged: (String? q) {
-                            setState(() {
-                              selectedVideoFormat = VideoFormat.values[int.parse(q!)];
-                            });
-                          },
+                          width: 10,
                         ),
-                      )
-                    ],
-                  ),
-                  Row(
+                        SizedBox(
+                          width: 80,
+                          child: DropdownButton<String>(
+                            elevation: 3,
+                            isExpanded: true,
+                            value: selectedVideoFormat.index.toString(),
+                            underline: Container(color: Colors.transparent),
+                            padding: EdgeInsets.only(left: 10),
+                            items: [
+                              DropdownMenuItem(
+                                value: '0',
+                                child: Text('mv4'),
+                              ),
+                              DropdownMenuItem(
+                                value: '1',
+                                child: Text('mov'),
+                              ),
+                              DropdownMenuItem(
+                                value: '2',
+                                child: Text('mp4'),
+                              )
+                            ],
+                            onChanged: (String? q) {
+                              setState(() {
+                                selectedVideoFormat =
+                                    VideoFormat.values[int.parse(q!)];
+                              });
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           "Audio Format",
                         ),
-                        SizedBox(width: 10,),
                         SizedBox(
-                        width:220,
-                        child:DropdownButton<String>(
-                          elevation: 3,
-                          isExpanded: true,
-                          value: selectedAudioFormat.index.toString(),
-                          underline: Container(color: Colors.transparent),
-                          padding: EdgeInsets.only(left: 10),
-                          items: add,
-                          onChanged: (String? q) {
-                            setState(() {
-                              selectedAudioFormat = AudioFormat.values[int.parse(q!)];
-                            });
-                          },
+                          width: 10,
                         ),
-                      )
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 90,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CheckboxListTile(
-                              value: enableAudio,
-                              contentPadding: EdgeInsets.zero,
-                              tristate: false,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text("Enable Audio"),
-                              onChanged: (bool? newValue) {
-                                setState(() {
-                                  this.enableAudio = newValue ?? false;
-                                });
-                              },
-                            ),
-                            CheckboxListTile(
-                              value: usePlatformView,
-                              contentPadding: EdgeInsets.zero,
-                              tristate: false,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text(
-                                  "Use Platform View (Experimental - Not Working)"),
-                              onChanged: (bool? newValue) {
-                                setState(() {
-                                  this.usePlatformView = newValue ?? false;
-                                });
-                              },
-                            ),
-                            CheckboxListTile(
-                              value: enableTourch,
-                              contentPadding: EdgeInsets.zero,
-                              tristate: false,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text("Toggle Tourch"),
-                              onChanged: (bool? newValue) {
-                                setState(() {
-                                  this.enableTourch = newValue ?? false;
-                                  macOSController?.toggleTourch(!this.enableTourch?Tourch.on:Tourch.off);
-                                });
-                              },
-                            ),
-                            CheckboxListTile(
-                              value: streamImage,
-                              contentPadding: EdgeInsets.zero,
-                              tristate: false,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: Text("Stream Image"),
-                              onChanged: (bool? newValue) {
-                                if(macOSController != null){
+                        SizedBox(
+                          width: 220,
+                          child: DropdownButton<String>(
+                            elevation: 3,
+                            isExpanded: true,
+                            value: selectedAudioFormat.index.toString(),
+                            underline: Container(color: Colors.transparent),
+                            padding: EdgeInsets.only(left: 10),
+                            items: add,
+                            onChanged: (String? q) {
+                              setState(() {
+                                selectedAudioFormat =
+                                    AudioFormat.values[int.parse(q!)];
+                              });
+                            },
+                          ),
+                        )
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 90,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CheckboxListTile(
+                                value: enableAudio,
+                                contentPadding: EdgeInsets.zero,
+                                tristate: false,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                title: Text("Enable Audio"),
+                                onChanged: (bool? newValue) {
                                   setState(() {
-                                    this.streamImage = newValue ?? false;
+                                    this.enableAudio = newValue ?? false;
+                                  });
+                                },
+                              ),
+                              CheckboxListTile(
+                                value: usePlatformView,
+                                contentPadding: EdgeInsets.zero,
+                                tristate: false,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                title: Text(
+                                    "Use Platform View (Experimental - Not Working)"),
+                                onChanged: (bool? newValue) {
+                                  setState(() {
+                                    this.usePlatformView = newValue ?? false;
+                                  });
+                                },
+                              ),
+                              CheckboxListTile(
+                                value: enableTorch,
+                                contentPadding: EdgeInsets.zero,
+                                tristate: false,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                title: Text("Toggle Torch"),
+                                onChanged: (bool? newValue) {
+                                  setState(() {
+                                    this.enableTorch = newValue ?? false;
+                                    macOSController?.toggleTorch(
+                                        !this.enableTorch
+                                            ? Torch.on
+                                            : Torch.off);
+                                  });
+                                },
+                              ),
+                              CheckboxListTile(
+                                value: streamImage,
+                                contentPadding: EdgeInsets.zero,
+                                tristate: false,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                title: Text("Stream Image"),
+                                onChanged: (bool? newValue) {
+                                  if (macOSController != null) {
+                                    setState(() {
+                                      this.streamImage = newValue ?? false;
 
-                                    if(streamImage == true){
-                                      macOSController?.startImageStream((image) { 
-                                        streamedImage = image;
-                                        setState(() {
-                                          
+                                      if (streamImage == true) {
+                                        macOSController
+                                            ?.startImageStream((image) {
+                                          streamedImage = image;
+                                          setState(() {});
                                         });
-                                      });
-                                    }
-                                    else{
-                                      macOSController?.stopImageStream();
-                                      streamedImage = null;
+                                      } else {
+                                        macOSController?.stopImageStream();
+                                        streamedImage = null;
+                                      }
+                                    });
+                                  }
+                                },
+                              ),
+                              Text(
+                                "Camera mode",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              RadioListTile(
+                                title: Text("Photo"),
+                                contentPadding: EdgeInsets.zero,
+                                value: CameraMacOSMode.photo,
+                                groupValue: cameraMode,
+                                onChanged: (CameraMacOSMode? newMode) {
+                                  setState(() {
+                                    if (newMode != null) {
+                                      this.cameraMode = newMode;
                                     }
                                   });
-                                }
-                              },
-                            ),
-                            Text(
-                              "Camera mode",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
+                                },
                               ),
-                            ),
-                            RadioListTile(
-                              title: Text("Photo"),
-                              contentPadding: EdgeInsets.zero,
-                              value: CameraMacOSMode.photo,
-                              groupValue: cameraMode,
-                              onChanged: (CameraMacOSMode? newMode) {
-                                setState(() {
-                                  if (newMode != null) {
-                                    this.cameraMode = newMode;
-                                  }
-                                });
-                              },
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: RadioListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: Text("Video"),
-                                    value: CameraMacOSMode.video,
-                                    groupValue: cameraMode,
-                                    onChanged: (CameraMacOSMode? newMode) {
-                                      setState(() {
-                                        if (newMode != null) {
-                                          this.cameraMode = newMode;
-                                        }
-                                      });
-                                    },
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: RadioListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      title: Text("Video"),
+                                      value: CameraMacOSMode.video,
+                                      groupValue: cameraMode,
+                                      onChanged: (CameraMacOSMode? newMode) {
+                                        setState(() {
+                                          if (newMode != null) {
+                                            this.cameraMode = newMode;
+                                          }
+                                        });
+                                      },
+                                    ),
                                   ),
-                                ),
-                                Visibility(
-                                  visible: cameraMode == CameraMacOSMode.video,
-                                  child: Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12.0),
-                                      child: TextField(
-                                        controller: durationController,
-                                        decoration: InputDecoration(
-                                          labelText: "Video Length",
+                                  Visibility(
+                                    visible:
+                                        cameraMode == CameraMacOSMode.video,
+                                    child: Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12.0),
+                                        child: TextField(
+                                          controller: durationController,
+                                          decoration: InputDecoration(
+                                            labelText: "Video Length",
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      Spacer(flex: 10),
-                    ],
-                  ),
-                  Container(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      MaterialButton(
-                        color: Colors.red,
-                        textColor: Colors.white,
-                        child: Builder(
-                          builder: (context) {
-                            String buttonText = "Destroy";
-                            if (macOSController != null &&
-                                macOSController!.isDestroyed) {
-                              buttonText = "Reinitialize";
-                            }
-                            return Text(buttonText);
-                          },
+                        Spacer(flex: 10),
+                      ],
+                    ),
+                    Container(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        MaterialButton(
+                          color: Colors.red,
+                          textColor: Colors.white,
+                          child: Builder(
+                            builder: (context) {
+                              String buttonText = "Destroy";
+                              if (macOSController != null &&
+                                  macOSController!.isDestroyed) {
+                                buttonText = "Reinitialize";
+                              }
+                              return Text(buttonText);
+                            },
+                          ),
+                          onPressed: destroyCamera,
                         ),
-                        onPressed: destroyCamera,
-                      ),
-                      MaterialButton(
-                        color: Colors.lightBlue,
-                        textColor: Colors.white,
-                        child: Text(cameraButtonText),
-                        onPressed: onCameraButtonTap,
-                      ),
-                    ],
-                  ),
-                ],
+                        MaterialButton(
+                          color: Colors.lightBlue,
+                          textColor: Colors.white,
+                          child: Text(cameraButtonText),
+                          onPressed: onCameraButtonTap,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        )
-      ),
+            ],
+          )),
     );
   }
 

@@ -50,7 +50,7 @@ class CameraMacOSView extends StatefulWidget {
   final AudioQuality audioQuality;
 
   /// Turn the light on the device on
-  final Tourch toggleTourch;
+  final Torch toggleTorch;
 
   /// The Orientation of the camera
   final CameraOrientation orientation;
@@ -71,8 +71,8 @@ class CameraMacOSView extends StatefulWidget {
     this.pictureFormat = PictureFormat.tiff,
     this.videoFormat = VideoFormat.mp4,
     this.audioFormat = AudioFormat.kAudioFormatAppleLossless,
-    this.toggleTourch = Tourch.off,
-    this.orientation = CameraOrientation.orientation0deg
+    this.toggleTorch = Torch.off,
+    this.orientation = CameraOrientation.orientation0deg,
   }) : super(key: key);
 
   @override
@@ -86,19 +86,20 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
   @override
   void initState() {
     super.initState();
-    initializeCameraFuture = CameraMacOSPlatform.instance.initialize(
-      deviceId: widget.deviceId,
-      audioDeviceId: widget.audioDeviceId,
-      cameraMacOSMode: widget.cameraMode,
-      enableAudio: widget.enableAudio,
-      resolution: widget.resolution,
-      audioQuality: widget.audioQuality,
-      videoFormat: widget.videoFormat,
-      audioFormat: widget.audioFormat,
-      pictureFormat: widget.pictureFormat,
-      toggleTourch: widget.toggleTourch,
-      orientation: widget.orientation
-    ).then((value) {
+    initializeCameraFuture = CameraMacOSPlatform.instance
+        .initialize(
+            deviceId: widget.deviceId,
+            audioDeviceId: widget.audioDeviceId,
+            cameraMacOSMode: widget.cameraMode,
+            enableAudio: widget.enableAudio,
+            resolution: widget.resolution,
+            audioQuality: widget.audioQuality,
+            videoFormat: widget.videoFormat,
+            audioFormat: widget.audioFormat,
+            pictureFormat: widget.pictureFormat,
+            toggleTorch: widget.toggleTorch,
+            orientation: widget.orientation)
+        .then((value) {
       if (value != null) {
         this.arguments = value;
         widget.onCameraInizialized(
@@ -197,7 +198,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         oldWidget.audioDeviceId != widget.audioDeviceId ||
         oldWidget.cameraMode != widget.cameraMode ||
         oldWidget.enableAudio != widget.enableAudio ||
-        oldWidget.toggleTourch != widget.toggleTourch ||
+        oldWidget.toggleTorch != widget.toggleTorch ||
         oldWidget.resolution != widget.resolution ||
         oldWidget.audioQuality != widget.audioQuality ||
         oldWidget.videoFormat != widget.videoFormat ||
@@ -218,8 +219,8 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         pictureFormat: widget.pictureFormat,
         videoFormat: widget.videoFormat,
         audioFormat: widget.audioFormat,
-        toggleTourch: widget.toggleTourch,
-        orientation: widget.orientation
+        toggleTorch: widget.toggleTorch,
+        orientation: widget.orientation,
       )
           .then((value) {
         if (value != null) {

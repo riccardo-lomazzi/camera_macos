@@ -7,7 +7,7 @@ enum PictureFormat { jpg, jpeg, tiff, bmp, png, raw }
 
 enum VideoFormat { m4v, mov, mp4 }
 
-enum Tourch{ on, off, auto }
+enum Torch { on, off, auto }
 
 enum CameraMacOSMode { photo, video }
 
@@ -84,15 +84,14 @@ enum CameraOrientation {
   orientation270deg
 }
 
-//double get getMaxZoomLevel => 
+//double get getMaxZoomLevel =>
 
-class CameraImageData{
-  CameraImageData({
-    required this.width,
-    required this.height,
-    required this.bytesPerRow,
-    required this.bytes
-  });
+class CameraImageData {
+  CameraImageData(
+      {required this.width,
+      required this.height,
+      required this.bytesPerRow,
+      required this.bytes});
 
   final int width;
   final int height;
@@ -101,11 +100,8 @@ class CameraImageData{
 
   @override
   String toString() {
-    return {
-      'width': width,
-      'height': height,
-      'bytesPerRow': bytesPerRow
-    }.toString();
+    return {'width': width, 'height': height, 'bytesPerRow': bytesPerRow}
+        .toString();
   }
 }
 

@@ -1,4 +1,3 @@
-import 'package:camera_macos/camera_macos_view.dart';
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
@@ -20,6 +19,10 @@ class MockCameraMacOSPlatform
     VideoFormat videoFormat = VideoFormat.mp4,
     PictureResolution resolution = PictureResolution.max,
     required CameraMacOSMode cameraMacOSMode,
+    AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
+    AudioQuality audioQuality = AudioQuality.max,
+    Torch toggleTorch = Torch.off,
+    CameraOrientation orientation = CameraOrientation.orientation0deg,
   }) {
     throw UnimplementedError();
   }
@@ -32,32 +35,27 @@ class MockCameraMacOSPlatform
     bool? enableAudio,
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) {
-    // TODO: implement recordVideo
     throw UnimplementedError();
   }
 
   @override
   Future<CameraMacOSFile?> stopVideoRecording() {
-    // TODO: implement stopRecording
     throw UnimplementedError();
   }
 
   @override
   Future<CameraMacOSFile?> takePicture() {
-    // TODO: implement takePicture
     throw UnimplementedError();
   }
 
   @override
   Future<bool> destroy() {
-    // TODO: implement destroy
     throw UnimplementedError();
   }
 
   @override
   Future<List<CameraMacOSDevice>> listDevices(
       {CameraMacOSDeviceType? deviceType}) {
-    // TODO: implement listDevices
     throw UnimplementedError();
   }
 
@@ -73,7 +71,22 @@ class MockCameraMacOSPlatform
   }
 
   @override
-  Future<void> setFocusPoint(String? deviceId, Offset? point) {
+  Future<void> setFocusPoint(Offset? point) {
+    throw UnimplementedError("");
+  }
+
+  @override
+  Future<void> setZoomLevel(double zoom) {
+    throw UnimplementedError("");
+  }
+
+  @override
+  Future<void> setOrientation(CameraOrientation orientation) {
+    throw UnimplementedError("");
+  }
+
+  @override
+  Future<void> toggleTorch(Torch torch) {
     throw UnimplementedError("");
   }
 }

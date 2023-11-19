@@ -56,39 +56,39 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Call this method to initialize camera. If you implement the widget in your widget tree, this method is useless.
   @override
-  Future<CameraMacOSArguments?> initialize({
-    /// initialize the camera with a video device. If null, the macOS default camera is chosen
-    String? deviceId,
+  Future<CameraMacOSArguments?> initialize(
+      {
+      /// initialize the camera with a video device. If null, the macOS default camera is chosen
+      String? deviceId,
 
-    /// initialize the camera with an audio device. If null, the macOS default microphone is chosen
-    String? audioDeviceId,
+      /// initialize the camera with an audio device. If null, the macOS default microphone is chosen
+      String? audioDeviceId,
 
-    /// Photo or Video
-    required CameraMacOSMode cameraMacOSMode,
+      /// Photo or Video
+      required CameraMacOSMode cameraMacOSMode,
 
-    /// format of the output photo
-    PictureFormat pictureFormat = PictureFormat.tiff,
+      /// format of the output photo
+      PictureFormat pictureFormat = PictureFormat.tiff,
 
-    /// format of the output photo
-    VideoFormat videoFormat = VideoFormat.mp4,
+      /// format of the output photo
+      VideoFormat videoFormat = VideoFormat.mp4,
 
-    /// resolution of the output video/image
-    PictureResolution resolution = PictureResolution.max,
+      /// resolution of the output video/image
+      PictureResolution resolution = PictureResolution.max,
 
-    /// Enable Audio Recording
-    bool enableAudio = true,
+      /// Enable Audio Recording
+      bool enableAudio = true,
 
-    /// Change the videos audio format type
-    AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
+      /// Change the videos audio format type
+      AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
+      AudioQuality audioQuality = AudioQuality.max,
 
-    AudioQuality audioQuality = AudioQuality.max,
+      /// Enable light
+      Torch toggleTorch = Torch.off,
 
-    /// Enable light
-    Tourch toggleTourch = Tourch.off,
-
-    /// Set camera orientation
-    CameraOrientation orientation = CameraOrientation.orientation0deg
-  }) async {
+      /// Set camera orientation
+      CameraOrientation orientation =
+          CameraOrientation.orientation0deg}) async {
     try {
       final Map<String, dynamic>? result =
           await methodChannel.invokeMapMethod<String, dynamic>(
@@ -100,8 +100,8 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           "enableAudio": enableAudio,
           'resolution': resolution.name,
           'quality': audioQuality.name,
-          'orientation': orientation.index*90.0,
-          'tourch': toggleTourch.index,
+          'orientation': orientation.index * 90.0,
+          'torch': toggleTorch.index,
           'pformat': pictureFormat.name,
           'vformat': videoFormat.name,
           'aformat': audioFormat.index,
@@ -268,18 +268,14 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<void> startImageStream(void Function(CameraImageData image) onAvailable) async{
-    events = eventChannel
-    .receiveBroadcastStream()
-    .listen((data){
-      onAvailable(
-        CameraImageData(
-          width: data['width'], 
-          height: data['height'], 
+  Future<void> startImageStream(
+      void Function(CameraImageData image) onAvailable) async {
+    events = eventChannel.receiveBroadcastStream().listen((data) {
+      onAvailable(CameraImageData(
+          width: data['width'],
+          height: data['height'],
           bytesPerRow: data['bytesPerRow'],
-          bytes: Uint8List.fromList(data['data'])
-        )
-      );
+          bytes: Uint8List.fromList(data['data'])));
     });
   }
 
@@ -289,11 +285,11 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<void> toggleTourch(Tourch tourch){
+  Future<void> toggleTorch(Torch torch) {
     return methodChannel.invokeMethod<void>(
-      'toggleTourch',
+      'toggleTorch',
       <String, dynamic>{
-        'tourch': tourch.index,
+        'torch': torch.index,
       },
     );
   }
