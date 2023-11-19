@@ -49,17 +49,33 @@ class CameraMacOSController {
     return _platformInstance.destroy();
   }
 
+  /// Turn light on
+  Future<void> toggleTorch(Torch torch) async {
+    _platformInstance.toggleTorch(torch);
+  }
+
+  /// Stream current argb image
   Future<void> startImageStream(
       void Function(CameraImageData) onAvailable) async {
     _platformInstance.startImageStream(onAvailable);
   }
 
+  /// Stop the image from streaming
   Future<void> stopImageStream() async {
     _platformInstance.stopImageStream();
   }
 
-  Future<void> setFocusPoint(String deviceId, Offset? point) async {
-    _platformInstance.setFocusPoint(deviceId, point);
+  /// Set a new focus point in the image
+  Future<void> setFocusPoint(Offset point) async {
+    _platformInstance.setFocusPoint(point);
+  }
+
+  Future<void> setZoomLevel(double zoom) async {
+    _platformInstance.setZoomLevel(zoom);
+  }
+
+  Future<void> setOrientation(CameraOrientation orientation) async {
+    _platformInstance.setOrientation(orientation);
   }
 
   /// Getter that checks if a video is currently recording

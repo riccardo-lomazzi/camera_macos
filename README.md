@@ -40,7 +40,7 @@ Integrate ```CameraMacOSView``` in your widget tree.
 You can choose a ```BoxFit``` method and a ```CameraMacOSMode``` (```photo``` or ```video```).
 When the camera is initialized, a ```CameraMacOSController``` object is created and can be used to do basic things such as taking pictures and recording videos.
 
-```
+``` dart
 final GlobalKey cameraKey = GlobalKey("cameraKey");
 late CameraMacOSController macOSController;
 
@@ -63,7 +63,7 @@ CameraMacOSView(
 The package supports external cameras too, not just the main Mac camera: you can specify an optional ```deviceId``` for the camera and an optional ```audioDeviceId``` for the microphone.
 Both IDs are related to the ```uniqueID``` property of ```AVCaptureDevice```, and can be obtained with the ```listDevices``` method.
 
-```
+``` dart
 String? deviceId;
 String? audioDeviceId;
 
@@ -102,11 +102,42 @@ You also have information about the camera object you've just created with the `
 Setting the focus point can be done with the ```setFocusPoint``` method.
 
 ``` dart
-macOSController.setFocusPoint(cameraId, Offset(0.5,0.5));
+macOSController.setFocusPoint(Offset(0.5,0.5));
 ```
 The `CameraMacOSView` widget enables it by default.
 
 Note: the offset needs to be between `0` and `1`.
+
+### Toggling Torch ###
+
+Setting the torch to on, off, or auto can be done with the ```toggleTorch``` method.
+
+``` dart
+macOSController.toggleTorch(Torch.on);
+```
+The `CameraMacOSView` widget disables it by default.
+
+### Setting Orientation ###
+
+Setting the orientation to 0, 90, 180, or 270 can be done with the ```setOrientation``` method.
+
+Note: This feature for is only available for macOS < 14.0 and Swift < 15.
+
+``` dart
+macOSController.setOrientation(CameraOrientation.orientation0deg);
+```
+The `CameraMacOSView` widget defaults to 0.
+
+### Setting Zoom ###
+
+WARNING: This feature is only available for ```imageStream``` right now.
+
+Setting the zoom from 1 - inifity can be done with the ```setZoomLevel``` method.
+
+``` dart
+macOSController.setZoomLevel(1.0);
+```
+The `CameraMacOSView` widget defaults to 1.
 
 ### Taking a picture ###
 
@@ -136,6 +167,8 @@ macOSController.stopImageStream();
 
 ```
 
+Note: the streamed data is in argb8888 format
+
 ### Recording a video ###
 
 Recording videos can be done with the ```recordVideo``` method, and can be stopped with the ```stopVideoRecording```.
@@ -147,7 +180,7 @@ macOSController.recordVideo(
     onVideoRecordingFinished: (CameraMacOSFile? file, CameraMacOSException? exception) {
         // called when maxVideoDuration has been reached
         // do something with the file or catch the exception
-    });
+    }
 );
 
 CameraMacOSFile? file = await macOSController.stopVideoRecording();
@@ -165,7 +198,8 @@ You can enable or disable audio recording with the ```enableAudio``` flag.
 
 Default videos settings are:
 - max resolution available to the selected camera - can be changed by setting the `resolution` property
-- default microphone format (```ac1```) - currently locked
+- max audio quality available to the selected video - can be changed by setting the `audioQuality` property
+- default microphone codec (```apple lossless```) - can be changed by setting the `audioFormat` property
 - default video format (```mp4```) - can be changed by setting the `videoFormat` property
 
 You can set a maximum video duration (in seconds) for recording videos with ```maxVideoDuration```.
@@ -185,11 +219,11 @@ After a video or a picture is taken, a ```CameraMacOSFile``` object is generated
 
 - The package supports ```macOS 10.11``` and onwards.
 - The plugin is just a temporary substitutive package for the official Flutter team's ```camera``` package. It will work only on ```macOS```.
-- Zoom and orientation change are currently unsupported
+- Orientation is only available for macOS < 14.0 and Swift < 15.
+- Zoom is currently unsupported
 
 ## Future developments
-- Being able to change the audio quality
-- Zoom and orientation change
+- Zoom for video and texture
 
 ## License
 

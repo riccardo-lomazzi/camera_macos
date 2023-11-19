@@ -1,8 +1,4 @@
-import 'package:camera_macos/camera_macos_arguments.dart';
-import 'package:camera_macos/camera_macos_device.dart';
-import 'package:camera_macos/camera_macos_file.dart';
-import 'package:camera_macos/camera_macos_view.dart';
-import 'package:camera_macos/exceptions.dart';
+import 'package:camera_macos/camera_macos.dart';
 import 'package:flutter/material.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -38,6 +34,10 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     PictureFormat pictureFormat = PictureFormat.tiff,
     VideoFormat videoFormat = VideoFormat.mp4,
     PictureResolution resolution = PictureResolution.max,
+    AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
+    AudioQuality audioQuality = AudioQuality.max,
+    Torch toggleTorch = Torch.off,
+    CameraOrientation orientation = CameraOrientation.orientation0deg,
     required CameraMacOSMode cameraMacOSMode,
   }) {
     throw UnimplementedError("");
@@ -74,7 +74,19 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<void> setFocusPoint(String? deviceId, Offset? point) {
+  Future<void> setFocusPoint(Offset point) {
+    throw UnimplementedError("");
+  }
+
+  Future<void> setZoomLevel(double zoom) {
+    throw UnimplementedError("");
+  }
+
+  Future<void> setOrientation(CameraOrientation orientation) {
+    throw UnimplementedError("");
+  }
+
+  Future<void> toggleTorch(Torch torch) {
     throw UnimplementedError("");
   }
 
