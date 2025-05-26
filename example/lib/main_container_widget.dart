@@ -1,10 +1,11 @@
 import 'dart:io';
+
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos_example/input_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as pathJoiner;
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MainContainerWidget extends StatefulWidget {
@@ -247,7 +248,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                               margin: EdgeInsets.only(left: 40),
                                               child: CameraMacOSView(
                                                 key: cameraKey,
-                                                deviceId: selectedVideoDevice,
+                                                deviceId: selectedVideoDevice!,
                                                 audioDeviceId:
                                                     selectedAudioDevice,
                                                 fit: BoxFit.fitWidth,
@@ -267,7 +268,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                                     selectedAudioFormat,
                                                 isVideoMirrored:
                                                     isVideoMirrored,
-                                                onCameraInizialized:
+                                                onCameraInitialized:
                                                     (CameraMacOSController
                                                         controller) {
                                                   setState(() {
@@ -631,11 +632,12 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                       this.streamImage = newValue ?? false;
 
                                       if (streamImage == true) {
-                                        macOSController
-                                            ?.startImageStream((image) {
-                                          streamedImage = image;
-                                          setState(() {});
-                                        });
+                                        macOSController?.startImageStream(
+                                          (image) {
+                                            streamedImage = image;
+                                            setState(() {});
+                                          },
+                                        );
                                       } else {
                                         macOSController?.stopImageStream();
                                         streamedImage = null;

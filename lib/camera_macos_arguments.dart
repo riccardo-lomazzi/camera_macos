@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:camera_macos/camera_macos_device.dart';
 import 'package:flutter/material.dart';
 
 enum PictureFormat { jpg, jpeg, tiff, bmp, png, raw }
@@ -87,11 +86,12 @@ enum CameraOrientation {
 //double get getMaxZoomLevel =>
 
 class CameraImageData {
-  CameraImageData(
-      {required this.width,
-      required this.height,
-      required this.bytesPerRow,
-      required this.bytes});
+  CameraImageData({
+    required this.width,
+    required this.height,
+    required this.bytesPerRow,
+    required this.bytes,
+  });
 
   final int width;
   final int height;
@@ -106,19 +106,19 @@ class CameraImageData {
 }
 
 class CameraMacOSArguments {
+  /// The device id of the camera.
+  final String deviceId;
+
   /// The texture id.
   final int? textureId;
 
   /// Size of the texture.
   final Size size;
 
-  /// Chosen device
-  final List<CameraMacOSDevice>? devices;
-
   /// Create a [CameraMacOSArguments].
   CameraMacOSArguments({
-    this.textureId,
+    required this.deviceId,
     required this.size,
-    this.devices,
+    this.textureId,
   });
 }

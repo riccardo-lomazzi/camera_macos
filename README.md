@@ -50,7 +50,7 @@ CameraMacOSView(
     key: cameraKey,
     fit: BoxFit.fill,
     cameraMode: CameraMacOSMode.photo,
-    onCameraInizialized: (CameraMacOSController controller) {
+    onCameraInitialized: (CameraMacOSController controller) {
         setState(() {
             this.macOSController = controller;
         });
@@ -60,7 +60,7 @@ CameraMacOSView(
 
 ### External cameras
 
-The package supports external cameras too, not just the main Mac camera: you can specify an optional ```deviceId``` for the camera and an optional ```audioDeviceId``` for the microphone.
+The package supports external cameras too, not just the main Mac camera: you have to specify a ```deviceId``` for the camera and an optional ```audioDeviceId``` for the microphone.
 Both IDs are related to the ```uniqueID``` property of ```AVCaptureDevice```, and can be obtained with the ```listDevices``` method.
 
 ``` dart
@@ -79,10 +79,10 @@ audioDeviceId = audioDevices.first.deviceId
 //... build method ...
 
 CameraMacOSView(
-    deviceId: deviceId, // optional camera parameter, defaults to the Mac primary camera
+    deviceId: deviceId, 
     audioDeviceId: audioDeviceId, // optional microphone parameter, defaults to the Mac primary microphone
     cameraMode: CameraMacOSMode.video,
-    onCameraInizialized: (CameraMacOSController controller) {
+    onCameraInitialized: (CameraMacOSController controller) {
         // ...
     },
 ),

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   MethodChannelCameraMacOS platform = MethodChannelCameraMacOS();
   const MethodChannel channel = MethodChannel('camera_macos');
+  const deviceId = "test_device_id";
 
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() {
@@ -31,6 +32,7 @@ void main() {
     "initialize camera picture",
     () async {
       CameraMacOSArguments? macOSArguments = await platform.initialize(
+        deviceId: deviceId,
         cameraMacOSMode: CameraMacOSMode.photo,
       );
       expect(macOSArguments, isNot(null));
@@ -44,6 +46,7 @@ void main() {
     "initialize camera video",
     () async {
       CameraMacOSArguments? macOSArguments = await platform.initialize(
+        deviceId: deviceId,
         cameraMacOSMode: CameraMacOSMode.video,
       );
       expect(macOSArguments, isNot(null));
@@ -57,13 +60,16 @@ void main() {
     "take picture",
     () async {
       CameraMacOSArguments? macOSArguments = await platform.initialize(
+        deviceId: deviceId,
         cameraMacOSMode: CameraMacOSMode.photo,
       );
       expect(macOSArguments, isNot(null));
       expect(macOSArguments?.textureId, isNot(null));
       expect(macOSArguments?.size.width, greaterThanOrEqualTo(0));
       expect(macOSArguments?.size.height, greaterThanOrEqualTo(0));
-      CameraMacOSFile? file = await platform.takePicture();
+      CameraMacOSFile? file = await platform.takePicture(
+        deviceId: deviceId,
+      );
       expect(file, isNot(null));
       expect(file?.bytes, isNot(null));
       expect(file?.bytes, isNotEmpty);
@@ -74,6 +80,7 @@ void main() {
     "record short video",
     () async {
       CameraMacOSArguments? macOSArguments = await platform.initialize(
+        deviceId: deviceId,
         cameraMacOSMode: CameraMacOSMode.video,
       );
       expect(macOSArguments, isNot(null));
@@ -81,6 +88,7 @@ void main() {
       expect(macOSArguments?.size.width, greaterThanOrEqualTo(0));
       expect(macOSArguments?.size.height, greaterThanOrEqualTo(0));
       bool? started = await platform.startVideoRecording(
+          deviceId: deviceId,
           maxVideoDuration: 5,
           onVideoRecordingFinished:
               (CameraMacOSFile? file, CameraMacOSException? exception) {
@@ -97,6 +105,7 @@ void main() {
     "record video and stop",
     () async {
       CameraMacOSArguments? macOSArguments = await platform.initialize(
+        deviceId: deviceId,
         cameraMacOSMode: CameraMacOSMode.video,
       );
       expect(macOSArguments, isNot(null));
@@ -104,13 +113,14 @@ void main() {
       expect(macOSArguments?.size.width, greaterThanOrEqualTo(0));
       expect(macOSArguments?.size.height, greaterThanOrEqualTo(0));
       bool? started = await platform.startVideoRecording(
+          deviceId: deviceId,
           onVideoRecordingFinished:
               (CameraMacOSFile? file, CameraMacOSException? exception) {
-        expect(file, isNot(null));
-        expect(file?.bytes, isNot(null));
-        expect(file?.bytes, isNotEmpty);
-        expect(platform.isRecording, false);
-      });
+            expect(file, isNot(null));
+            expect(file?.bytes, isNot(null));
+            expect(file?.bytes, isNotEmpty);
+            expect(platform.isRecording, false);
+          });
       expect(started, isNot(null));
       expect(platform.isRecording, true);
       expect(started, true);
@@ -121,13 +131,16 @@ void main() {
     "destroy",
     () async {
       CameraMacOSArguments? macOSArguments = await platform.initialize(
+        deviceId: deviceId,
         cameraMacOSMode: CameraMacOSMode.video,
       );
       expect(macOSArguments, isNot(null));
       expect(macOSArguments?.textureId, isNot(null));
       expect(macOSArguments?.size.width, greaterThanOrEqualTo(0));
       expect(macOSArguments?.size.height, greaterThanOrEqualTo(0));
-      bool? destroyed = await platform.destroy();
+      bool? destroyed = await platform.destroy(
+        deviceId: deviceId,
+      );
       expect(destroyed, isNot(null));
       expect(destroyed, true);
       expect(platform.isDestroyed, true);

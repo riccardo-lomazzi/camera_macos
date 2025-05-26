@@ -30,6 +30,7 @@ class MockCameraMacOSPlatform
 
   @override
   Future<bool> startVideoRecording({
+    required String deviceId,
     CameraMacOSDevice? device,
     double? maxVideoDuration,
     String? url,
@@ -40,17 +41,23 @@ class MockCameraMacOSPlatform
   }
 
   @override
-  Future<CameraMacOSFile?> stopVideoRecording() {
+  Future<CameraMacOSFile?> stopVideoRecording({
+    required String deviceId,
+  }) {
     throw UnimplementedError();
   }
 
   @override
-  Future<CameraMacOSFile?> takePicture() {
+  Future<CameraMacOSFile?> takePicture({
+    required String deviceId,
+  }) {
     throw UnimplementedError();
   }
 
   @override
-  Future<bool> destroy() {
+  Future<bool> destroy({
+    required String deviceId,
+  }) {
     throw UnimplementedError();
   }
 
@@ -63,38 +70,56 @@ class MockCameraMacOSPlatform
   @override
   Future<void> startImageStream(
     void Function(CameraImageData) onAvailable, {
+    required String deviceId,
     void Function(dynamic)? onError,
   }) async {
     throw UnimplementedError("");
   }
 
   @override
-  Future<void> stopImageStream() async {
+  Future<void> stopImageStream({
+    required String deviceId,
+  }) async {
     throw UnimplementedError("");
   }
 
   @override
-  Future<void> setFocusPoint(Offset? point) {
+  Future<void> setFocusPoint(
+    Offset? point, {
+    required String deviceId,
+  }) {
     throw UnimplementedError("");
   }
 
   @override
-  Future<void> setZoomLevel(double zoom) {
+  Future<void> setZoomLevel(
+    double zoom, {
+    required String deviceId,
+  }) {
     throw UnimplementedError("");
   }
 
   @override
-  Future<void> setOrientation(CameraOrientation orientation) {
+  Future<void> setOrientation(
+    CameraOrientation orientation, {
+    required String deviceId,
+  }) {
     throw UnimplementedError("");
   }
 
   @override
-  Future<void> toggleTorch(Torch torch) {
+  Future<void> toggleTorch(
+    Torch torch, {
+    required String deviceId,
+  }) {
     throw UnimplementedError("");
   }
 
   @override
-  Future<void> setVideoMirrored(bool isVideoMirrored) {
+  Future<void> setVideoMirrored(
+    bool isVideoMirrored, {
+    required String deviceId,
+  }) {
     throw UnimplementedError("");
   }
 }

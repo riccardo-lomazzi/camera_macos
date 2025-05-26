@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:camera_macos/camera_macos_arguments.dart';
 import 'package:camera_macos/camera_macos_device.dart';
 import 'package:camera_macos/camera_macos_file.dart';
@@ -13,7 +14,8 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('camera_macos');
-  static const EventChannel eventChannel = EventChannel('camera_macos/stream');
+  static eventChannel(String deviceId) =>
+      EventChannel('camera_macos/stream/$deviceId');
   StreamSubscription? events;
 
   bool methodCallHandlerSet = false;
@@ -59,7 +61,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   Future<CameraMacOSArguments?> initialize(
       {
       /// initialize the camera with a video device. If null, the macOS default camera is chosen
-      String? deviceId,
+      required String deviceId,
 
       /// initialize the camera with an audio device. If null, the macOS default microphone is chosen
       String? audioDeviceId,
@@ -115,22 +117,13 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
         throw result["error"];
       }
       isDestroyed = false;
-      List<Map<String, dynamic>> devicesList =
-          List.from(result["devices"] ?? [])
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
-      List<CameraMacOSDevice> devices = [];
-      for (Map<String, dynamic> m in devicesList) {
-        CameraMacOSDevice device = CameraMacOSDevice.fromMap(m);
-        devices.add(device);
-      }
       return CameraMacOSArguments(
         textureId: result["textureId"],
+        deviceId: result["deviceId"],
         size: Size(
           result["size"]?["width"] ?? 0,
           result["size"]?["height"] ?? 0,
         ),
-        devices: devices,
       );
     } catch (e) {
       return Future.error(e);
@@ -139,13 +132,20 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Call this method to take a picture.
   @override
-  Future<CameraMacOSFile?> takePicture(
-      {PictureFormat format = PictureFormat.tiff,
-      PictureResolution resolution = PictureResolution.max}) async {
+  Future<CameraMacOSFile?> takePicture({
+    required String deviceId,
+    PictureFormat format = PictureFormat.tiff,
+    PictureResolution resolution = PictureResolution.max,
+  }) async {
     try {
-      final Map<String, dynamic>? result = await methodChannel
-          .invokeMapMethod<String, dynamic>('takePicture',
-              {'format': format.name, 'resolution': resolution.name});
+      final result = await methodChannel.invokeMapMethod<String, dynamic>(
+        'takePicture',
+        {
+          'deviceId': deviceId,
+          'format': format.name,
+          'resolution': resolution.name,
+        },
+      );
       if (result == null) {
         throw FlutterError("Invalid result");
       }
@@ -162,6 +162,9 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   /// Call this method to start a video recording.
   @override
   Future<bool> startVideoRecording({
+    /// The device id of the camera to use
+    required String deviceId,
+
     /// Max video duration, expressed in seconds
     double? maxVideoDuration,
 
@@ -175,16 +178,17 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) async {
     try {
-      registeredCallbacks["onVideoRecordingFinished"] =
+      registeredCallbacks[_onVideoRecordingFinishedCallbackName(deviceId)] =
           onVideoRecordingFinished;
       if (!methodCallHandlerSet) {
-        methodChannel.setMethodCallHandler(_genericMethodCallHandler);
+        methodChannel.setMethodCallHandler(_onFinishedMethodCallHandler);
         methodCallHandlerSet = true;
       }
       final Map<String, dynamic>? result =
           await methodChannel.invokeMapMethod<String, dynamic>(
         'startRecording',
         {
+          "deviceId": deviceId,
           "maxVideoDuration": maxVideoDuration,
           "url": url,
           "enableAudio": enableAudio,
@@ -207,10 +211,15 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Call this method to stop video recording and collect the video data.
   @override
-  Future<CameraMacOSFile?> stopVideoRecording() async {
+  Future<CameraMacOSFile?> stopVideoRecording({
+    /// The device id of the camera to use
+    required String deviceId,
+  }) async {
     try {
-      final Map<String, dynamic>? result =
-          await methodChannel.invokeMapMethod<String, dynamic>('stopRecording');
+      final Map<String, dynamic>? result = await methodChannel
+          .invokeMapMethod<String, dynamic>('stopRecording', {
+        "deviceId": deviceId,
+      });
       if (result == null) {
         throw FlutterError("Invalid result");
       }
@@ -231,48 +240,54 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
 
   /// Destroy the camera instance
   @override
-  Future<bool?> destroy() async {
+  Future<bool?> destroy({
+    /// The device id of the camera to use
+    required String deviceId,
+  }) async {
     try {
-      final bool result = await methodChannel.invokeMethod('destroy') ?? false;
+      final result = await methodChannel.invokeMethod('destroy', {
+        "deviceId": deviceId,
+      });
       events?.cancel();
       isDestroyed = result;
       isRecording = false;
-      return result;
+      return result ?? false;
     } catch (e) {
       return Future.error(e);
     }
   }
 
-  Future<void> _genericMethodCallHandler(MethodCall call) async {
-    switch (call.method) {
-      case "onVideoRecordingFinished":
-        isRecording = false;
-        if (registeredCallbacks["onVideoRecordingFinished"] != null) {
-          dynamic args = call.arguments;
-          CameraMacOSFile? result;
-          CameraMacOSException? exception;
-          if (args is Map) {
-            if (args["error"] != null) {
-              exception = CameraMacOSException.fromMap(args["error"]);
-            }
-            result = CameraMacOSFile(
-              bytes: args["videoData"] as Uint8List?,
-              url: args["url"] as String?,
-            );
-          }
-          registeredCallbacks["onVideoRecordingFinished"]!(result, exception);
-        }
-        break;
-      default:
-        break;
+  Future<void> _onFinishedMethodCallHandler(MethodCall call) async {
+    final args = call.arguments as Map;
+    final deviceId = args["deviceId"] as String? ?? "";
+    final key = _onVideoRecordingFinishedCallbackName(deviceId);
+    final registeredCallback = registeredCallbacks.remove(key);
+    if (registeredCallback == null) {
+      // No callback registered, ignore the call
+      return;
     }
+
+    isRecording = false;
+
+    CameraMacOSException? exception;
+    if (args["error"] != null) {
+      exception = CameraMacOSException.fromMap(args["error"]);
+    }
+
+    final result = CameraMacOSFile(
+      bytes: args["videoData"] as Uint8List?,
+      url: args["url"] as String?,
+    );
+    registeredCallback(result, exception);
   }
 
   @override
   Future<void> startImageStream(
-      void Function(CameraImageData? image) onAvailable,
-      {void Function(dynamic)? onError}) async {
-    events = eventChannel.receiveBroadcastStream().listen(
+    void Function(CameraImageData? image) onAvailable, {
+    required String deviceId,
+    void Function(dynamic)? onError,
+  }) async {
+    events = eventChannel(deviceId).receiveBroadcastStream().listen(
       (data) {
         if (data is Map) {
           onAvailable(
@@ -298,7 +313,10 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<void> stopImageStream() async {
+  Future<void> stopImageStream({
+    /// The device id of the camera to use
+    required String deviceId,
+  }) async {
     try {
       await events?.cancel();
       events = null;
@@ -312,23 +330,33 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<void> toggleTorch(Torch torch) {
+  Future<void> toggleTorch(
+    Torch torch, {
+    /// The device id of the camera to use
+    required String deviceId,
+  }) {
     return methodChannel.invokeMethod<void>(
       'toggleTorch',
       <String, dynamic>{
+        'deviceId': deviceId,
         'torch': torch.index,
       },
     );
   }
 
   @override
-  Future<void> setFocusPoint(Offset point) {
+  Future<void> setFocusPoint(
+    Offset point, {
+    /// The device id of the camera to use
+    required String deviceId,
+  }) {
     assert(point.dx >= 0 && point.dx <= 1);
     assert(point.dy >= 0 && point.dy <= 1);
 
     return methodChannel.invokeMethod<void>(
       'setFocusPoint',
       <String, dynamic>{
+        'deviceId': deviceId,
         'x': point.dx,
         'y': point.dy,
       },
@@ -336,34 +364,53 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<void> setZoomLevel(double zoom) {
+  Future<void> setZoomLevel(
+    double zoom, {
+    /// The device id of the camera to use
+    required String deviceId,
+  }) {
     assert(zoom >= 0 && zoom <= 10.0);
 
     return methodChannel.invokeMethod<void>(
       'setZoom',
       <String, dynamic>{
+        'deviceId': deviceId,
         'zoom': zoom,
       },
     );
   }
 
   @override
-  Future<void> setOrientation(CameraOrientation orientation) {
+  Future<void> setOrientation(
+    CameraOrientation orientation, {
+    /// The device id of the camera to use
+    required String deviceId,
+  }) {
     return methodChannel.invokeMethod<void>(
       'setOrientation',
       <String, dynamic>{
+        'deviceId': deviceId,
         'orientation': orientation.index,
       },
     );
   }
 
   @override
-  Future<void> setVideoMirrored(bool isVideoMirrored) {
+  Future<void> setVideoMirrored(
+    bool isVideoMirrored, {
+    /// The device id of the camera to use
+    required String deviceId,
+  }) {
     return methodChannel.invokeMethod<void>(
       'setVideoMirrored',
       <String, dynamic>{
+        'deviceId': deviceId,
         'isVideoMirrored': isVideoMirrored,
       },
     );
+  }
+
+  String _onVideoRecordingFinishedCallbackName(String deviceId) {
+    return "onVideoRecordingFinished_$deviceId";
   }
 }

@@ -11,7 +11,7 @@ class CameraMacOSView extends StatefulWidget {
   final BoxFit fit;
 
   /// DeviceId of the video streaming device
-  final String? deviceId;
+  final String deviceId;
 
   /// Audio DeviceId of the audio streaming device
   final String? audioDeviceId;
@@ -26,7 +26,7 @@ class CameraMacOSView extends StatefulWidget {
   final Widget Function(Object?)? onCameraLoading;
 
   /// Callback that gets called when the "initialize" method has returned a value.
-  final Function(CameraMacOSController) onCameraInizialized;
+  final Function(CameraMacOSController) onCameraInitialized;
 
   /// Callback that gets called when the "destroy" method has returned.
   final Widget Function()? onCameraDestroyed;
@@ -59,12 +59,12 @@ class CameraMacOSView extends StatefulWidget {
 
   const CameraMacOSView({
     Key? key,
-    this.deviceId,
+    required this.deviceId,
     this.audioDeviceId,
     this.enableAudio = true,
     this.fit = BoxFit.contain,
     required this.cameraMode,
-    required this.onCameraInizialized,
+    required this.onCameraInitialized,
     this.onCameraLoading,
     this.onCameraDestroyed,
     this.usePlatformView = false,
@@ -107,7 +107,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         .then((value) {
       if (value != null) {
         this.arguments = value;
-        widget.onCameraInizialized(
+        widget.onCameraInitialized(
           CameraMacOSController(value),
         );
       }
@@ -232,7 +232,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
           .then((value) {
         if (value != null) {
           this.arguments = value;
-          widget.onCameraInizialized(
+          widget.onCameraInitialized(
             CameraMacOSController(value),
           );
         }
@@ -246,7 +246,10 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
       details.localPosition.dx / maxWidth,
       details.localPosition.dy / maxHeight,
     );
-    CameraMacOS.instance.setFocusPoint(newPoint);
+    CameraMacOS.instance.setFocusPoint(
+      newPoint,
+      deviceId: arguments.deviceId,
+    );
   }
 
   @override

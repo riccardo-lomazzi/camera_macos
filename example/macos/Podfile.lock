@@ -25,11 +25,11 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos
 
 SPEC CHECKSUMS:
-  camera_macos: c2603f5eed16f05076cf17e12030d2ce55a77839
+  camera_macos: 9fd766915a6c236c8b3fd902f7ccd215636cd07a
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  url_launcher_macos: d2691c7dd33ed713bf3544850a623080ec693d95
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  url_launcher_macos: c83b920a14ed6c0ec4d6069c3ec3e19222607405
 
 PODFILE CHECKSUM: 353c8bcc5d5b0994e508d035b5431cfe18c1dea7
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

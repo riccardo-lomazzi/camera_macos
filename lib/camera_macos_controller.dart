@@ -12,9 +12,13 @@ class CameraMacOSController {
 
   CameraMacOSPlatform get _platformInstance => CameraMacOSPlatform.instance;
 
+  String get deviceId => args.deviceId;
+
   /// Call this method to take a picture.
   Future<CameraMacOSFile?> takePicture() {
-    return _platformInstance.takePicture();
+    return _platformInstance.takePicture(
+      deviceId: deviceId,
+    );
   }
 
   /// Call this method to start a video recording.
@@ -32,6 +36,7 @@ class CameraMacOSController {
     Function(CameraMacOSFile?, CameraMacOSException?)? onVideoRecordingFinished,
   }) {
     return _platformInstance.startVideoRecording(
+      deviceId: deviceId,
       maxVideoDuration: maxVideoDuration,
       enableAudio: enableAudio,
       url: url,
@@ -41,17 +46,24 @@ class CameraMacOSController {
 
   /// Call this method to stop video recording and collect the video data.
   Future<CameraMacOSFile?> stopRecording() {
-    return _platformInstance.stopVideoRecording();
+    return _platformInstance.stopVideoRecording(
+      deviceId: deviceId,
+    );
   }
 
   /// Destroy the camera instance
   Future<bool?> destroy() {
-    return _platformInstance.destroy();
+    return _platformInstance.destroy(
+      deviceId: deviceId,
+    );
   }
 
   /// Turn light on
   Future<void> toggleTorch(Torch torch) async {
-    _platformInstance.toggleTorch(torch);
+    _platformInstance.toggleTorch(
+      torch,
+      deviceId: deviceId,
+    );
   }
 
   /// Stream current argb image
@@ -59,29 +71,46 @@ class CameraMacOSController {
     void Function(CameraImageData?) onAvailable, {
     void Function(dynamic)? onError,
   }) async {
-    _platformInstance.startImageStream(onAvailable);
+    _platformInstance.startImageStream(
+      deviceId: deviceId,
+      onAvailable,
+    );
   }
 
   /// Stop the image from streaming
   Future<void> stopImageStream() async {
-    _platformInstance.stopImageStream();
+    _platformInstance.stopImageStream(
+      deviceId: deviceId,
+    );
   }
 
   /// Set a new focus point in the image
   Future<void> setFocusPoint(Offset point) async {
-    _platformInstance.setFocusPoint(point);
+    _platformInstance.setFocusPoint(
+      point,
+      deviceId: deviceId,
+    );
   }
 
   Future<void> setZoomLevel(double zoom) async {
-    _platformInstance.setZoomLevel(zoom);
+    _platformInstance.setZoomLevel(
+      zoom,
+      deviceId: deviceId,
+    );
   }
 
   Future<void> setOrientation(CameraOrientation orientation) async {
-    _platformInstance.setOrientation(orientation);
+    _platformInstance.setOrientation(
+      orientation,
+      deviceId: deviceId,
+    );
   }
 
   Future<void> setVideoMirrored(bool isVideoMirrored) async {
-    _platformInstance.setVideoMirrored(isVideoMirrored);
+    _platformInstance.setVideoMirrored(
+      isVideoMirrored,
+      deviceId: deviceId,
+    );
   }
 
   /// Getter that checks if a video is currently recording
