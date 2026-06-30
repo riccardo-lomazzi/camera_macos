@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera_macos/camera_macos.dart';
 import 'package:camera_macos_example/input_image.dart';
+import 'package:camera_macos_example/radio_group.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -650,10 +651,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              RadioListTile(
-                                title: Text("Photo"),
-                                contentPadding: EdgeInsets.zero,
-                                value: CameraMacOSMode.photo,
+                              RadioGroupWidget<CameraMacOSMode>(
                                 groupValue: cameraMode,
                                 onChanged: (CameraMacOSMode? newMode) {
                                   setState(() {
@@ -662,42 +660,28 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                     }
                                   });
                                 },
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: RadioListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      title: Text("Video"),
-                                      value: CameraMacOSMode.video,
-                                      groupValue: cameraMode,
-                                      onChanged: (CameraMacOSMode? newMode) {
-                                        setState(() {
-                                          if (newMode != null) {
-                                            this.cameraMode = newMode;
-                                          }
-                                        });
-                                      },
-                                    ),
+                                items: [
+                                  RadioGroupItem<CameraMacOSMode>(
+                                    value: CameraMacOSMode.photo,
+                                    title: "Photo",
                                   ),
-                                  Visibility(
-                                    visible:
-                                        cameraMode == CameraMacOSMode.video,
-                                    child: Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12.0),
-                                        child: TextField(
-                                          controller: durationController,
-                                          decoration: InputDecoration(
-                                            labelText: "Video Length",
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                  RadioGroupItem<CameraMacOSMode>(
+                                    value: CameraMacOSMode.video,
+                                    title: "Video",
                                   ),
                                 ],
                               ),
+                              if (cameraMode == CameraMacOSMode.video)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0),
+                                  child: TextField(
+                                    controller: durationController,
+                                    decoration: InputDecoration(
+                                      labelText: "Video Length",
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),

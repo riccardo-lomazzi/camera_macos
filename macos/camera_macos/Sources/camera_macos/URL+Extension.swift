@@ -6,15 +6,21 @@
 //
 
 import Foundation
+#if os(macOS)
+import AppKit // Required for NSWorkspace
+#endif
 
 func showInFinder(url: URL?) {
     guard let url = url else { return }
     
+    #if os(macOS)
     if url.isDirectory {
-        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: url.path)
+        // Casting nil to String? resolves the 'contextual type' error
+        NSWorkspace.shared.selectFile(nil as String?, inFileViewerRootedAtPath: url.path)
     } else {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
+    #endif
 }
 
 extension URL {

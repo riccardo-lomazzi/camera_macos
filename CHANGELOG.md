@@ -1,3 +1,5 @@
+## 0.1.0
+* Added SPM Support
 ## 0.0.9
 * Bug Fixes: Image stream should now stop correctly
 * Added Video Mirroring functionality
