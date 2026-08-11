@@ -49,9 +49,9 @@ class CameraMacOSController {
     return _platformInstance.destroy();
   }
 
-  /// Turn light on
-  Future<void> toggleTorch(Torch torch) async {
-    _platformInstance.toggleTorch(torch);
+  /// Set the camera flash/torch mode
+  Future<void> setFlashMode(FlashMode mode) async {
+    return _platformInstance.setFlashMode(mode);
   }
 
   /// Stream current argb image

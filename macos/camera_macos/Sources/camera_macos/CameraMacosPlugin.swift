@@ -133,9 +133,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
             initCamera(arguments, result)
         case "takePicture":
             takePicture(result,pictureFormat)
-        case "toggleTorch":
+        case "setFlashMode":
             let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
-            toggleTorch(arguments, result)
+            setFlashMode(arguments, result)
         case "startRecording":
             let arguments = call.arguments as? Dictionary<String, Any> ?? [:]
             startRecording(arguments, result)
@@ -433,8 +433,9 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                 self.videoDevice = newCameraObject
                 do {
                     let focusPoint: CGPoint = .init(x: 0.5, y: 0.5)
-                    let ti = arguments["torch"] as? Int
-                    let torch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
+                    // Dart FlashMode enum: off = 0, on = 1, auto = 2
+                    let flashModeIndex = arguments["flashMode"] as? Int
+                    let flashMode: AVCaptureDevice.TorchMode = (flashModeIndex == nil || flashModeIndex == 0) ? .off : (flashModeIndex == 1 ? .on : .auto)
                     try newCameraObject.lockForConfiguration()
                     if newCameraObject.isFocusModeSupported(.autoFocus) {
                         newCameraObject.focusMode = .autoFocus
@@ -448,8 +449,8 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
                     if newCameraObject.isExposurePointOfInterestSupported {
                         newCameraObject.exposurePointOfInterest = focusPoint
                     }
-                    if newCameraObject.isTorchModeSupported(torch){
-                        newCameraObject.torchMode = torch
+                    if newCameraObject.isTorchModeSupported(flashMode){
+                        newCameraObject.torchMode = flashMode
                     }
                     newCameraObject.unlockForConfiguration()
                     
@@ -694,17 +695,25 @@ public class CameraMacosPlugin: NSObject, FlutterPlugin, FlutterTexture, AVCaptu
         return resizeCGImage(image.cropping(to: toRect)!)!
     }
 
-    func toggleTorch(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
-        let ti = arguments["torch"] as? Int
-        let torch:AVCaptureDevice.TorchMode = (ti == nil || ti == 0) ? .off : (ti == 1 ? .on : .auto)
-        if videoDevice.isTorchModeSupported(torch){
-            videoDevice.torchMode = torch
-            videoDevice.unlockForConfiguration()
-            
-            result(nil)
+    func setFlashMode(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {
+        guard let videoDevice = videoDevice else {
+            result(["error": FlutterError(code: "SET_FLASH_MODE_ERROR", message: "Camera is not initialized.", details: nil).toMap])
+            return
         }
-        else{
-            result(["error": FlutterError(code: "TOGGLE_TOURCH_ERROR", message: "This device does not have a light to turn on/off.", details: nil).toMap])
+        // Dart FlashMode enum: off = 0, on = 1, auto = 2
+        let flashModeIndex = arguments["flashMode"] as? Int
+        let flashMode: AVCaptureDevice.TorchMode = (flashModeIndex == nil || flashModeIndex == 0) ? .off : (flashModeIndex == 1 ? .on : .auto)
+        guard videoDevice.isTorchModeSupported(flashMode) else {
+            result(["error": FlutterError(code: "SET_FLASH_MODE_ERROR", message: "This device does not have a light to turn on/off.", details: nil).toMap])
+            return
+        }
+        do {
+            try videoDevice.lockForConfiguration()
+            videoDevice.torchMode = flashMode
+            videoDevice.unlockForConfiguration()
+            result(nil)
+        } catch {
+            result(["error": FlutterError(code: "SET_FLASH_MODE_ERROR", message: "Could not lock camera for flash configuration: \(error.localizedDescription)", details: nil).toMap])
         }
     }
     func startRecording(_ arguments: Dictionary<String, Any>, _ result: @escaping FlutterResult) {

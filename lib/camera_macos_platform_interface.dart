@@ -36,7 +36,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     PictureResolution resolution = PictureResolution.max,
     AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
     AudioQuality audioQuality = AudioQuality.max,
-    Torch toggleTorch = Torch.off,
+    FlashMode flashMode = FlashMode.off,
     CameraOrientation orientation = CameraOrientation.orientation0deg,
     bool isVideoMirrored = true,
     required CameraMacOSMode cameraMacOSMode,
@@ -91,7 +91,7 @@ abstract class CameraMacOSPlatform extends PlatformInterface {
     throw UnimplementedError("");
   }
 
-  Future<void> toggleTorch(Torch torch) {
+  Future<void> setFlashMode(FlashMode mode) {
     throw UnimplementedError("");
   }
 

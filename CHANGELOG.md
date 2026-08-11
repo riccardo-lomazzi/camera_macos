@@ -1,3 +1,13 @@
+## 0.1.1
+* Renamed `toggleTorch` to `setFlashMode` and `Torch` enum to `FlashMode`
+* Renamed `CameraMacOSView.toggleTorch` parameter to `flashMode`
+* Fixed flash mode enum order to match native mapping (`off`, `on`, `auto`)
+* Fixed missing `lockForConfiguration` when setting flash mode
+* `setFlashMode` now surfaces native errors to Dart
+* Raised macOS minimum deployment target to 10.15 (required by FlutterFramework / SPM)
+* Example: flash control is a mode selector (`off` / `on` / `auto`)
+* Example: Apple-style fading focus reticule on camera tap
+* Example: flash errors show an alert and reset the mode to `off`
 ## 0.1.0
 * Added SPM Support
 ## 0.0.9

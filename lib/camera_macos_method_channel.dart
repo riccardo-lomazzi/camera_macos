@@ -83,8 +83,8 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
       AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
       AudioQuality audioQuality = AudioQuality.max,
 
-      /// Enable light
-      Torch toggleTorch = Torch.off,
+      /// Flash/torch mode
+      FlashMode flashMode = FlashMode.off,
 
       /// Set camera orientation
       CameraOrientation orientation = CameraOrientation.orientation0deg,
@@ -102,7 +102,7 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
           'quality': audioQuality.name,
           'orientation': orientation.index * 90.0,
           'isVideoMirrored': isVideoMirrored,
-          'torch': toggleTorch.index,
+          'flashMode': flashMode.index,
           'pformat': pictureFormat.name,
           'vformat': videoFormat.name,
           'aformat': audioFormat.index,
@@ -312,13 +312,21 @@ class MethodChannelCameraMacOS extends CameraMacOSPlatform {
   }
 
   @override
-  Future<void> toggleTorch(Torch torch) {
-    return methodChannel.invokeMethod<void>(
-      'toggleTorch',
-      <String, dynamic>{
-        'torch': torch.index,
-      },
-    );
+  Future<void> setFlashMode(FlashMode mode) async {
+    try {
+      final Map<String, dynamic>? result =
+          await methodChannel.invokeMapMethod<String, dynamic>(
+        'setFlashMode',
+        <String, dynamic>{
+          'flashMode': mode.index,
+        },
+      );
+      if (result != null && result["error"] != null) {
+        throw result["error"];
+      }
+    } catch (e) {
+      return Future.error(e);
+    }
   }
 
   @override

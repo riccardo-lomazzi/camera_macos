@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
   name: "camera_macos",
   platforms: [
-    .macOS(.v10_11)
+    .macOS(.v10_15)
   ],
   products: [
     .library(name: "camera-macos", targets: ["camera_macos"])

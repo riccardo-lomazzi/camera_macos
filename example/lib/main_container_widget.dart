@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:camera_macos/camera_macos.dart';
+import 'package:camera_macos_example/focus_reticule.dart';
 import 'package:camera_macos_example/input_image.dart';
 import 'package:camera_macos_example/radio_group.dart';
 import 'package:flutter/foundation.dart';
@@ -35,7 +36,7 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   String? selectedAudioDevice;
 
   bool enableAudio = true;
-  bool enableTorch = false;
+  FlashMode selectedFlashMode = FlashMode.off;
   bool usePlatformView = false;
   bool streamImage = false;
   bool isVideoMirrored = true;
@@ -43,6 +44,9 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
   CameraImageData? streamedImage;
 
   double zoom = 1.0;
+
+  Offset? focusIndicatorPosition;
+  Key? focusIndicatorKey;
 
   List<DropdownMenuItem<String>> add = [];
 
@@ -213,81 +217,125 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                             ? SizedBox(
                                 width: (size.width - 24),
                                 height: (size.width - 24) * (9 / 16),
-                                child: GestureDetector(
-                                    onTapDown: (t) {
-                                      macOSController?.setFocusPoint(Offset(
-                                          t.localPosition.dx /
-                                              (size.width - 24),
-                                          t.localPosition.dy /
-                                              ((size.width - 24) * (9 / 16))));
-                                    },
-                                    child: Stack(
-                                        alignment: Alignment.topLeft,
+                                child: Stack(
+                                  alignment: Alignment.topLeft,
+                                  children: [
+                                    Positioned(
+                                      left: 0,
+                                      child: SizedBox(
+                                        height: (size.width - 24) * (9 / 16),
+                                        child: RotatedBox(
+                                          quarterTurns: 1,
+                                          child: Slider(
+                                            activeColor: Colors.red,
+                                            value: zoom,
+                                            min: 1.0,
+                                            max: 8.0,
+                                            onChanged: (value) {
+                                              macOSController
+                                                  ?.setZoomLevel(value);
+                                              setState(() => zoom = value);
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned.fill(
+                                      left: 40,
+                                      child: Stack(
+                                        fit: StackFit.expand,
                                         children: [
-                                          Positioned(
-                                              left: 0,
-                                              child: SizedBox(
-                                                  height: (size.width - 24) *
+                                          CameraMacOSView(
+                                            key: cameraKey,
+                                            deviceId: selectedVideoDevice,
+                                            audioDeviceId:
+                                                selectedAudioDevice,
+                                            fit: BoxFit.fitWidth,
+                                            cameraMode:
+                                                CameraMacOSMode.photo,
+                                            resolution:
+                                                selectedPictureResolution,
+                                            audioQuality:
+                                                selectedAudioQulaity,
+                                            pictureFormat:
+                                                selectedPictureFormat,
+                                            orientation:
+                                                selectedOrientation,
+                                            videoFormat:
+                                                selectedVideoFormat,
+                                            audioFormat:
+                                                selectedAudioFormat,
+                                            isVideoMirrored:
+                                                isVideoMirrored,
+                                            onCameraInizialized:
+                                                (CameraMacOSController
+                                                    controller) {
+                                              setState(() {
+                                                macOSController =
+                                                    controller;
+                                              });
+                                            },
+                                            onCameraDestroyed: () {
+                                              return Text(
+                                                  "Camera Destroyed!");
+                                            },
+                                            enableAudio: enableAudio,
+                                            usePlatformView:
+                                                usePlatformView,
+                                          ),
+                                          Positioned.fill(
+                                            child: GestureDetector(
+                                              behavior:
+                                                  HitTestBehavior.opaque,
+                                              onTapUp: (details) {
+                                                final previewSize = Size(
+                                                  (size.width - 24) - 40,
+                                                  (size.width - 24) *
                                                       (9 / 16),
-                                                  child: RotatedBox(
-                                                      quarterTurns: 1,
-                                                      child: Slider(
-                                                        activeColor: Colors.red,
-                                                        value: zoom,
-                                                        min: 1.0,
-                                                        max: 8.0,
-                                                        onChanged: (value) {
-                                                          macOSController
-                                                              ?.setZoomLevel(
-                                                                  value);
-                                                          setState(() =>
-                                                              zoom = value);
-                                                        },
-                                                      )))),
-                                          Container(
-                                              margin: EdgeInsets.only(left: 40),
-                                              child: CameraMacOSView(
-                                                key: cameraKey,
-                                                deviceId: selectedVideoDevice,
-                                                audioDeviceId:
-                                                    selectedAudioDevice,
-                                                fit: BoxFit.fitWidth,
-                                                cameraMode:
-                                                    CameraMacOSMode.photo,
-                                                resolution:
-                                                    selectedPictureResolution,
-                                                audioQuality:
-                                                    selectedAudioQulaity,
-                                                pictureFormat:
-                                                    selectedPictureFormat,
-                                                orientation:
-                                                    selectedOrientation,
-                                                videoFormat:
-                                                    selectedVideoFormat,
-                                                audioFormat:
-                                                    selectedAudioFormat,
-                                                isVideoMirrored:
-                                                    isVideoMirrored,
-                                                onCameraInizialized:
-                                                    (CameraMacOSController
-                                                        controller) {
-                                                  setState(() {
-                                                    macOSController =
-                                                        controller;
-                                                  });
-                                                },
-                                                onCameraDestroyed: () {
-                                                  return Text(
-                                                      "Camera Destroyed!");
-                                                },
-                                                toggleTorch: enableTorch
-                                                    ? Torch.on
-                                                    : Torch.off,
-                                                enableAudio: enableAudio,
-                                                usePlatformView:
-                                                    usePlatformView,
-                                              ))
-                                        ])))
+                                                );
+                                                final local =
+                                                    details.localPosition;
+                                                macOSController
+                                                    ?.setFocusPoint(
+                                                  Offset(
+                                                    (local.dx /
+                                                            previewSize
+                                                                .width)
+                                                        .clamp(0.0, 1.0),
+                                                    (local.dy /
+                                                            previewSize
+                                                                .height)
+                                                        .clamp(0.0, 1.0),
+                                                  ),
+                                                );
+                                                setState(() {
+                                                  focusIndicatorPosition =
+                                                      local;
+                                                  focusIndicatorKey =
+                                                      UniqueKey();
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          if (focusIndicatorPosition !=
+                                              null)
+                                            Positioned(
+                                              left: focusIndicatorPosition!
+                                                      .dx -
+                                                  36,
+                                              top: focusIndicatorPosition!
+                                                      .dy -
+                                                  36,
+                                              child: FocusReticule(
+                                                key: focusIndicatorKey,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
                             : Center(
                                 child: Text("Tap on List Devices first"),
                               ),
@@ -587,22 +635,56 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
                                   });
                                 },
                               ),
-                              CheckboxListTile(
-                                value: enableTorch,
-                                contentPadding: EdgeInsets.zero,
-                                tristate: false,
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                title: Text("Toggle Torch"),
-                                onChanged: (bool? newValue) {
-                                  setState(() {
-                                    this.enableTorch = newValue ?? false;
-                                    macOSController?.toggleTorch(
-                                        !this.enableTorch
-                                            ? Torch.on
-                                            : Torch.off);
-                                  });
-                                },
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text("Flash"),
+                                  SizedBox(width: 10),
+                                  SizedBox(
+                                    width: 80,
+                                    child: DropdownButton<FlashMode>(
+                                      elevation: 3,
+                                      isExpanded: true,
+                                      value: selectedFlashMode,
+                                      underline:
+                                          Container(color: Colors.transparent),
+                                      padding: EdgeInsets.only(left: 10),
+                                      items: FlashMode.values
+                                          .map(
+                                            (mode) => DropdownMenuItem(
+                                              value: mode,
+                                              child: Text(mode.name),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (FlashMode? mode) async {
+                                        if (mode == null) return;
+                                        setState(() {
+                                          selectedFlashMode = mode;
+                                        });
+                                        try {
+                                          await macOSController
+                                              ?.setFlashMode(mode);
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          setState(() {
+                                            selectedFlashMode = FlashMode.off;
+                                          });
+                                          if (mode != FlashMode.off) {
+                                            try {
+                                              await macOSController
+                                                  ?.setFlashMode(FlashMode.off);
+                                            } catch (_) {}
+                                          }
+                                          showAlert(
+                                            title: "Flash unavailable",
+                                            message: _flashModeErrorMessage(e),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                               CheckboxListTile(
                                 value: isVideoMirrored,
@@ -944,5 +1026,15 @@ class MainContainerWidgetState extends State<MainContainerWidget> {
         );
       },
     );
+  }
+
+  String _flashModeErrorMessage(Object error) {
+    if (error is Map) {
+      final message = error['message'];
+      if (message is String && message.isNotEmpty) {
+        return message;
+      }
+    }
+    return error.toString();
   }
 }

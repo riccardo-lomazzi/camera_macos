@@ -22,7 +22,7 @@ class MockCameraMacOSPlatform
     required CameraMacOSMode cameraMacOSMode,
     AudioFormat audioFormat = AudioFormat.kAudioFormatAppleLossless,
     AudioQuality audioQuality = AudioQuality.max,
-    Torch toggleTorch = Torch.off,
+    FlashMode flashMode = FlashMode.off,
     CameraOrientation orientation = CameraOrientation.orientation0deg,
   }) {
     throw UnimplementedError();
@@ -89,7 +89,7 @@ class MockCameraMacOSPlatform
   }
 
   @override
-  Future<void> toggleTorch(Torch torch) {
+  Future<void> setFlashMode(FlashMode mode) {
     throw UnimplementedError("");
   }
 

@@ -7,7 +7,7 @@ enum PictureFormat { jpg, jpeg, tiff, bmp, png, raw }
 
 enum VideoFormat { m4v, mov, mp4 }
 
-enum Torch { on, off, auto }
+enum FlashMode { off, on, auto }
 
 enum CameraMacOSMode { photo, video }
 

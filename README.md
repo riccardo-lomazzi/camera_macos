@@ -108,14 +108,14 @@ The `CameraMacOSView` widget enables it by default.
 
 Note: the offset needs to be between `0` and `1`.
 
-### Toggling Torch ###
+### Setting Flash Mode ###
 
-Setting the torch to on, off, or auto can be done with the ```toggleTorch``` method.
+Setting the flash/torch to on, off, or auto can be done with the ```setFlashMode``` method.
 
 ``` dart
-macOSController.toggleTorch(Torch.on);
+macOSController.setFlashMode(FlashMode.on);
 ```
-The `CameraMacOSView` widget disables it by default.
+The `CameraMacOSView` widget defaults to `FlashMode.off`. You can also pass an initial mode via the `flashMode` parameter.
 
 ### Setting Orientation ###
 

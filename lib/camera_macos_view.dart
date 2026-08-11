@@ -49,8 +49,8 @@ class CameraMacOSView extends StatefulWidget {
   /// Quality of the output audio
   final AudioQuality audioQuality;
 
-  /// Turn the light on the device on
-  final Torch toggleTorch;
+  /// Flash/torch mode of the device
+  final FlashMode flashMode;
 
   /// The Orientation of the camera
   final CameraOrientation orientation;
@@ -73,7 +73,7 @@ class CameraMacOSView extends StatefulWidget {
     this.pictureFormat = PictureFormat.tiff,
     this.videoFormat = VideoFormat.mp4,
     this.audioFormat = AudioFormat.kAudioFormatAppleLossless,
-    this.toggleTorch = Torch.off,
+    this.flashMode = FlashMode.off,
     this.orientation = CameraOrientation.orientation0deg,
     this.isVideoMirrored = true,
   }) : super(key: key);
@@ -100,7 +100,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
       videoFormat: widget.videoFormat,
       audioFormat: widget.audioFormat,
       pictureFormat: widget.pictureFormat,
-      toggleTorch: widget.toggleTorch,
+      flashMode: widget.flashMode,
       orientation: widget.orientation,
       isVideoMirrored: widget.isVideoMirrored,
     )
@@ -203,7 +203,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         oldWidget.audioDeviceId != widget.audioDeviceId ||
         oldWidget.cameraMode != widget.cameraMode ||
         oldWidget.enableAudio != widget.enableAudio ||
-        oldWidget.toggleTorch != widget.toggleTorch ||
+        oldWidget.flashMode != widget.flashMode ||
         oldWidget.resolution != widget.resolution ||
         oldWidget.audioQuality != widget.audioQuality ||
         oldWidget.videoFormat != widget.videoFormat ||
@@ -225,7 +225,7 @@ class CameraMacOSViewState extends State<CameraMacOSView> {
         pictureFormat: widget.pictureFormat,
         videoFormat: widget.videoFormat,
         audioFormat: widget.audioFormat,
-        toggleTorch: widget.toggleTorch,
+        flashMode: widget.flashMode,
         orientation: widget.orientation,
         isVideoMirrored: widget.isVideoMirrored,
       )
